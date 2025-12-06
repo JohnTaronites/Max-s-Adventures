@@ -104,7 +104,7 @@ function spawnObstacle() {
     
     // Losowa pozycja X (-3, 0, 3)
     const lane = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
-    mesh.position.set(lane * LANE_WIDTH, 0.5, -40); // Start daleko
+    mesh.position.set(lane * LANE_WIDTH, 0.5, -60); // Start daleko
     mesh.castShadow = true;
     
     scene.add(mesh);
@@ -120,7 +120,7 @@ function spawnCollectible() {
     const mesh = new THREE.Mesh(geo, mat);
     
     const lane = Math.floor(Math.random() * 3) - 1;
-    mesh.position.set(lane * LANE_WIDTH, 0.5, -40);
+    mesh.position.set(lane * LANE_WIDTH, 0.5, -60);
     
     scene.add(mesh);
     collectibles.push(mesh);
@@ -135,8 +135,7 @@ let targetX = 0;
 
 function handleInput(xNormalized) {
     // xNormalized to wartość od 0 (lewo) do 1 (prawo)
-    // Mapujemy to na pozycję świata gry (np. od -4 do 4)
-    const range = 8; 
+    const range = 7; // Nieco węższy zakres, żeby nie wyjeżdżać za daleko
     targetX = (xNormalized - 0.5) * range;
 }
 
@@ -147,6 +146,8 @@ document.addEventListener('mousemove', (e) => {
 
 // Obsługa dotyku (Mobile)
 document.addEventListener('touchmove', (e) => {
+    // Zapobiegamy przewijaniu strony podczas grania
+    e.preventDefault(); 
     handleInput(e.touches[0].clientX / window.innerWidth);
 }, { passive: false });
 
@@ -154,6 +155,9 @@ document.addEventListener('touchmove', (e) => {
 // --- PĘTLA GRY ---
 function animate() {
     requestAnimationFrame(animate);
+    
+    // To jest ta linijka, której brakowało! Rysuje scenę:
+    renderer.render(scene, camera); 
     
     if (isGameOver) return;
 
@@ -168,43 +172,48 @@ function animate() {
     playerGroup.rotation.x = Math.sin(Date.now() * 0.01) * 0.05; // Wibracje silnika
 
     // 2. Obsługa Przeszkód
-    obstacles.forEach((obj, index) => {
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        let obj = obstacles[i];
         obj.position.z += gameSpeed;
         obj.rotation.x += 0.02; // Obrót dla efektu
 
         // Kolizja
         const dist = playerGroup.position.distanceTo(obj.position);
-        if (dist < 1.2 && obj.position.z > -1 && obj.position.z < 1) {
+        // Sprawdzamy dystans tylko jeśli obiekt jest blisko gracza w osi Z
+        if (dist < 1.2 && obj.position.z > -1 && obj.position.z < 2) {
             handleCollision();
             scene.remove(obj);
-            obstacles.splice(index, 1);
+            obstacles.splice(i, 1);
+            continue;
         }
 
         // Usuwanie jeśli minie gracza
         if (obj.position.z > 10) {
             scene.remove(obj);
-            obstacles.splice(index, 1);
+            obstacles.splice(i, 1);
             updateScore(10);
         }
-    });
+    }
 
     // 3. Obsługa Znajdziek
-    collectibles.forEach((obj, index) => {
+    for (let i = collectibles.length - 1; i >= 0; i--) {
+        let obj = collectibles[i];
         obj.position.z += gameSpeed;
         
         // Zebranie
         const dist = playerGroup.position.distanceTo(obj.position);
-        if (dist < 1.2 && obj.position.z > -1 && obj.position.z < 1) {
+        if (dist < 1.2 && obj.position.z > -1 && obj.position.z < 2) {
             scene.remove(obj);
-            collectibles.splice(index, 1);
+            collectibles.splice(i, 1);
             updateScore(50);
+            continue;
         }
         
         if (obj.position.z > 10) {
             scene.remove(obj);
-            collectibles.splice(index, 1);
+            collectibles.splice(i, 1);
         }
-    });
+    }
 
     // Przyspieszanie gry
     gameSpeed += 0.0001;
