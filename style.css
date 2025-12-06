@@ -1,0 +1,96 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Blokuje przewijanie strony */
+    font-family: 'Verdana', sans-serif;
+    user-select: none; /* Blokuje zaznaczanie tekstu */
+    background-color: #87CEEB; /* Kolor nieba na start */
+}
+
+#canvas-container {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+}
+
+#ui-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Kliknięcia przechodzą przez UI do gry */
+}
+
+#stats-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+}
+
+.stat-box {
+    background: #333;
+    border: 2px solid #555;
+    border-radius: 8px;
+    padding: 5px 10px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    width: 80px;
+    text-align: center;
+}
+
+.label {
+    font-size: 10px;
+    color: #ccc;
+}
+
+.value {
+    font-size: 18px;
+    color: #ffd700;
+}
+
+#lives-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: right;
+    color: white;
+    text-shadow: 2px 2px 0 #000;
+}
+
+#hearts {
+    color: #ff4444;
+    font-size: 24px;
+    letter-spacing: 5px;
+}
+
+#game-over {
+    display: none; /* Ukryte na start */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    pointer-events: auto; /* Włączamy klikanie dla przycisku */
+}
+
+button {
+    background: #ffd700;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+button:active {
+    background: #e6c200;
+}
