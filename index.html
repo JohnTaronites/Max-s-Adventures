@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Desert Runner 3D</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -25,6 +25,10 @@
             <div id="hearts">❤❤❤</div>
         </div>
         
+        <div id="controls-hint" style="position: absolute; bottom: 20px; width: 100%; text-align: center; color: white; opacity: 0.7; font-size: 12px;">
+            PC: Strzałki / A-D &nbsp;|&nbsp; Mobile: Dotknij i przesuń
+        </div>
+        
         <div id="game-over">
             <h1>KONIEC GRY</h1>
             <p>Twój wynik: <span id="final-score">0</span></p>
@@ -34,13 +38,6 @@
 
     <div id="canvas-container"></div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-            }
-        }
-    </script>
     <script type="module" src="game.js"></script>
 </body>
 </html>
