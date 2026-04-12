@@ -7,7 +7,7 @@ const SPEED_BASE        = 0.042;  // start bardzo wolno
 const SPEED_PER_LEVEL   = 0.016;  // wzrost per poziom
 const SCORE_PER_LEVEL   = 400;    // co ile punktÃ³w nowy poziom
 const LANE_WIDTH        = 2.5;
-const ROAD_WIDTH        = 8;
+const ROAD_WIDTH        = 10;
 const ROAD_LENGTH       = 300;
 const DASH_COUNT        = 20;
 const DASH_SPACING      = 10;
@@ -33,8 +33,8 @@ scene.background = new THREE.Color(0x87CEEB);
 scene.fog = new THREE.Fog(0x87CEEB, 40, 90);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0, 5, 12);
-camera.lookAt(0, 0, -2);
+camera.position.set(0, 4.5, 11);
+camera.lookAt(0, 0.5, -8);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -158,14 +158,14 @@ const texFlame = makeCanvasTex(256, 128, (ctx) => {
 
 // Chassis
 const chassis = new THREE.Mesh(
-    new THREE.BoxGeometry(1.8, 0.22, 3.4),
+    new THREE.BoxGeometry(1.45, 0.22, 3.0),
     new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
 );
-chassis.position.y = 1.05; chassis.castShadow = true;
+chassis.position.y = 0.86; chassis.castShadow = true;
 playerGroup.add(chassis);
 
 // Body with license plate on rear face (+z)
-const bodyGeo = new THREE.BoxGeometry(2.0, 0.8, 3.2);
+const bodyGeo = new THREE.BoxGeometry(1.6, 0.72, 2.85);
 const bodyMats = [
     new THREE.MeshStandardMaterial({ color: 0xcc0000 }),
     new THREE.MeshStandardMaterial({ color: 0xcc0000 }),
@@ -175,32 +175,32 @@ const bodyMats = [
     new THREE.MeshStandardMaterial({ color: 0xaa0000 }),
 ];
 const body = new THREE.Mesh(bodyGeo, bodyMats);
-body.position.y = 1.6; body.castShadow = true;
+body.position.y = 1.38; body.castShadow = true;
 playerGroup.add(body);
 
 // Cabin
 const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(1.75, 0.75, 1.5),
+    new THREE.BoxGeometry(1.42, 0.68, 1.35),
     new THREE.MeshStandardMaterial({ color: 0xaa0000 })
 );
-cabin.position.set(0, 2.58, -0.2); cabin.castShadow = true;
+cabin.position.set(0, 2.08, -0.2); cabin.castShadow = true;
 playerGroup.add(cabin);
 
 // Windshield
 const windshield = new THREE.Mesh(
-    new THREE.BoxGeometry(1.6, 0.55, 0.06),
+    new THREE.BoxGeometry(1.3, 0.5, 0.06),
     new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.6 })
 );
-windshield.position.set(0, 2.56, 0.78);
+windshield.position.set(0, 2.06, 0.69);
 playerGroup.add(windshield);
 
 // Bull bar (x2 bars)
 [1.38, 1.15].forEach(yy => {
     const bar = new THREE.Mesh(
-        new THREE.BoxGeometry(1.9, 0.18, 0.12),
+        new THREE.BoxGeometry(1.55, 0.18, 0.12),
         new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.85, roughness: 0.2 })
     );
-    bar.position.set(0, yy, 1.65); playerGroup.add(bar);
+    bar.position.set(0, yy, 1.45); playerGroup.add(bar);
 });
 
 // Exhaust pipes
@@ -209,7 +209,7 @@ playerGroup.add(windshield);
         new THREE.CylinderGeometry(0.07, 0.09, 1.1, 8),
         new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.9 })
     );
-    exh.position.set(side * 1.0, 2.9, -0.55);
+    exh.position.set(side * 0.82, 2.38, -0.5);
     playerGroup.add(exh);
 });
 
@@ -219,7 +219,7 @@ playerGroup.add(windshield);
         new THREE.CylinderGeometry(0.17, 0.17, 0.09, 12),
         new THREE.MeshStandardMaterial({ color: 0xffffcc, emissive: 0xffff88, emissiveIntensity: 0.9 })
     );
-    lgt.rotation.x = Math.PI / 2; lgt.position.set(xPos, 1.65, 1.65);
+    lgt.rotation.x = Math.PI / 2; lgt.position.set(xPos, 1.44, 1.46);
     playerGroup.add(lgt);
 });
 
@@ -229,7 +229,7 @@ playerGroup.add(windshield);
         new THREE.PlaneGeometry(0.7, 0.7),
         new THREE.MeshStandardMaterial({ map: tex10, transparent: true, alphaTest: 0.08, depthWrite: false })
     );
-    d.position.set(side * 1.02, 1.62, 0.4);
+    d.position.set(side * 0.82, 1.38, 0.35);
     d.rotation.y = side * Math.PI / 2;
     playerGroup.add(d);
 });
@@ -240,22 +240,22 @@ playerGroup.add(windshield);
         new THREE.PlaneGeometry(1.8, 0.9),
         new THREE.MeshStandardMaterial({ map: texFlame, transparent: true, alphaTest: 0.04, depthWrite: false })
     );
-    f.position.set(side * 1.02, 1.15, -0.3);
+    f.position.set(side * 0.82, 1.0, -0.25);
     f.rotation.y = side * Math.PI / 2;
     playerGroup.add(f);
 });
 
 // Monster truck wheels
-const mtWheelGeo = new THREE.CylinderGeometry(0.78, 0.78, 0.65, 16);
+const mtWheelGeo = new THREE.CylinderGeometry(0.62, 0.62, 0.52, 16);
 const mtWheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.95 });
-const mtHubGeo   = new THREE.CylinderGeometry(0.3, 0.3, 0.67, 6);
+const mtHubGeo   = new THREE.CylinderGeometry(0.24, 0.24, 0.54, 6);
 const mtHubMat   = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 });
-const mtTreadGeo = new THREE.TorusGeometry(0.78, 0.1, 6, 18);
+const mtTreadGeo = new THREE.TorusGeometry(0.62, 0.09, 6, 18);
 const mtTreadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 1.0 });
-const axleGeo    = new THREE.CylinderGeometry(0.075, 0.075, 3.2, 8);
+const axleGeo    = new THREE.CylinderGeometry(0.065, 0.065, 2.6, 8);
 const axleMat    = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.7 });
 function addMonsterWheel(side, zPos) {
-    const x = side * 1.55; const y = 0.82;
+    const x = side * 1.22; const y = 0.65;
     const wh = new THREE.Mesh(mtWheelGeo, mtWheelMat);
     wh.rotation.z = Math.PI / 2; wh.position.set(x, y, zPos); wh.castShadow = true;
     playerGroup.add(wh);
@@ -270,7 +270,7 @@ addMonsterWheel( 1,  1.1); addMonsterWheel(-1,  1.1);
 addMonsterWheel( 1, -1.1); addMonsterWheel(-1, -1.1);
 [-1.1, 1.1].forEach(zPos => {
     const ax = new THREE.Mesh(axleGeo, axleMat);
-    ax.rotation.z = Math.PI / 2; ax.position.set(0, 0.82, zPos);
+    ax.rotation.z = Math.PI / 2; ax.position.set(0, 0.65, zPos);
     playerGroup.add(ax);
 });
 
