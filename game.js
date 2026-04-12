@@ -234,26 +234,36 @@ let collectibleGap   = 22;
 let obstacleCountdown   = obstacleGap;
 let collectibleCountdown = collectibleGap + 6; // moneta trochę po beczce
 
-// --- STEROWANIE (KLAWIATURA + DOTYK) ---
-let targetX  = 0;
-let keyInput = 0;
+// --- STEROWANIE (PASY — lane-snap) ---
+// 3 pasy: lewy (-1), środkowy (0), prawy (1)
+// Każde naciśnięcie przesuwa o jeden pas. Auto zawsze ląduje dokładnie na środku pasa.
+let currentLane = 0;   // -1 | 0 | 1
+let targetX     = 0;   // LANE_WIDTH * currentLane
+let laneCooldown = 0;  // blokada przez kilka klatek żeby jedno naciśnięcie = jeden pas
+
+function changeLane(dir) {
+    if (isGameOver || laneCooldown > 0) return;
+    currentLane = Math.max(-1, Math.min(1, currentLane + dir));
+    targetX = currentLane * LANE_WIDTH;
+    laneCooldown = 10; // ~10 klatek blokady przed kolejną zmianą
+}
 
 document.addEventListener('keydown', (event) => {
-    if (isGameOver) return;
-    if (event.key === 'ArrowLeft'  || event.key === 'a' || event.key === 'A') keyInput = -1;
-    else if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') keyInput = 1;
+    if (event.key === 'ArrowLeft'  || event.key === 'a' || event.key === 'A') changeLane(-1);
+    else if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') changeLane(1);
 });
-document.addEventListener('keyup', (event) => {
-    if ((event.key === 'ArrowLeft'  || event.key === 'a' || event.key === 'A') && keyInput === -1) keyInput = 0;
-    if ((event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') && keyInput ===  1) keyInput = 0;
+
+// Dotyk: swipe lewo/prawo
+let touchStartX = null;
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.addEventListener('touchend', (e) => {
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) changeLane(dx < 0 ? -1 : 1);
+    touchStartX = null;
 });
-document.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    let move = ((e.touches[0].clientX / window.innerWidth) * 2 - 1) * 4;
-    move = Math.max(-1, Math.min(1, move));
-    keyInput = move;
-}, { passive: false });
-document.addEventListener('touchend', () => { keyInput = 0; });
 
 // --- HELPER: kolizja XZ (ignoruje Y, bo monety sÄ… wyÅ¼ej niÅ¼ beczki) ---
 function collidesXZ(objPos) {
@@ -299,9 +309,9 @@ function animate() {
     requestAnimationFrame(animate);
 
     if (!isGameOver) {
-        targetX += keyInput * 0.15;
-        targetX = Math.max(-3.5, Math.min(3.5, targetX));
-        playerGroup.position.x += (targetX - playerGroup.position.x) * 0.1;
+        if (laneCooldown > 0) laneCooldown--;
+        // Płynne lerp do środka aktualnego pasa
+        playerGroup.position.x += (targetX - playerGroup.position.x) * 0.16;
         playerGroup.rotation.z = (playerGroup.position.x - targetX) * 0.08;
         playerGroup.rotation.x = Math.sin(Date.now() * 0.01) * 0.04;
     }
