@@ -227,8 +227,12 @@ function spawnCollectible() {
     collectibles.push(g);
 }
 
-setInterval(spawnWave, 2400);
-setInterval(spawnCollectible, 2900);
+// Spawning oparte o dystans (nie czas) — gwarantuje stały odstęp wzrokowy
+// niezależnie od aktualnej prędkości gry
+let obstacleGap      = 28;  // ile jednostek świata do następnej fali
+let collectibleGap   = 22;
+let obstacleCountdown   = obstacleGap;
+let collectibleCountdown = collectibleGap + 6; // moneta trochę po beczce
 
 // --- STEROWANIE (KLAWIATURA + DOTYK) ---
 let targetX  = 0;
@@ -313,7 +317,18 @@ function animate() {
     renderer.render(scene, camera);
 
     if (isGameOver) return;
-
+    // --- Spawning oparty o dystans ---
+    obstacleCountdown -= gameSpeed;
+    if (obstacleCountdown <= 0) {
+        spawnWave();
+        // losowy odstęp 26-32 jednostki między falami
+        obstacleCountdown = 26 + Math.random() * 6;
+    }
+    collectibleCountdown -= gameSpeed;
+    if (collectibleCountdown <= 0) {
+        spawnCollectible();
+        collectibleCountdown = 22 + Math.random() * 8;
+    }
     // --- ObsÅ‚uga przeszkÃ³d (beczki) ---
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obj = obstacles[i];
