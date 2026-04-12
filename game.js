@@ -206,9 +206,11 @@ function spawnWave() {
     const lanes = shuffle([-1, 0, 1]);
     // Zawsze zostawiamy przynajmniej 1 wolny pas (max 2 beczki na falÄ™)
     const count = Math.random() < 0.3 ? 2 : 1;
+    // Spawn z dostosowany do prędkości — ~300 klatek dojazdu
+    const spawnZ = -(PLAYER_Z + 300 * gameSpeed);
     for (let k = 0; k < count; k++) {
         const g = makeBarrelGroup();
-        g.position.set(lanes[k] * LANE_WIDTH, 0.5, -70);
+        g.position.set(lanes[k] * LANE_WIDTH, 0.5, spawnZ);
         scene.add(g);
         obstacles.push(g);
     }
@@ -218,7 +220,8 @@ function spawnCollectible() {
     if (isGameOver) return;
     const g = makeCoinGroup();
     const lane = Math.floor(Math.random() * 3) - 1;
-    g.position.set(lane * LANE_WIDTH, 1.1, -70);
+    const spawnZ = -(PLAYER_Z + 300 * gameSpeed);
+    g.position.set(lane * LANE_WIDTH, 1.1, spawnZ);
     g.rotation.x = Math.PI / 2;
     scene.add(g);
     collectibles.push(g);
@@ -299,10 +302,12 @@ function animate() {
         playerGroup.rotation.x = Math.sin(Date.now() * 0.01) * 0.04;
     }
 
-    // Scrollowanie linii jezdni
-    for (const dash of dashLines) {
-        dash.position.z += gameSpeed;
-        if (dash.position.z > 10) dash.position.z -= DASH_COUNT * DASH_SPACING;
+    // Scrollowanie linii jezdni — tylko gdy gra trwa
+    if (!isGameOver) {
+        for (const dash of dashLines) {
+            dash.position.z += gameSpeed;
+            if (dash.position.z > 10) dash.position.z -= DASH_COUNT * DASH_SPACING;
+        }
     }
 
     renderer.render(scene, camera);
@@ -408,7 +413,7 @@ function updateScore(val) {
 function handleCollision() {
     lives--;
     let hearts = '';
-    for (let i = 0; i < lives; i++) hearts += 'â¤';
+    for (let i = 0; i < lives; i++) hearts += '\u2764';
     document.getElementById('hearts').innerText = hearts;
 
     // MigniÄ™cie autka
