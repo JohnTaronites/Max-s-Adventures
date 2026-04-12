@@ -191,36 +191,55 @@ const windshield = new THREE.Mesh(
     new THREE.BoxGeometry(1.3, 0.5, 0.06),
     new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.6 })
 );
-windshield.position.set(0, 2.06, 0.69);
+windshield.position.set(0, 2.06, -0.89);
 playerGroup.add(windshield);
 
-// Bull bar (x2 bars)
-[1.38, 1.15].forEach(yy => {
+// Bull bar at FRONT of truck (-z side, facing obstacles)
+[1.32, 1.08].forEach(yy => {
     const bar = new THREE.Mesh(
         new THREE.BoxGeometry(1.55, 0.18, 0.12),
         new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.85, roughness: 0.2 })
     );
-    bar.position.set(0, yy, 1.45); playerGroup.add(bar);
+    bar.position.set(0, yy, -1.47); playerGroup.add(bar);
 });
 
-// Exhaust pipes
+// Vertical bull bar struts
+[-0.55, 0.55].forEach(xx => {
+    const strut = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.38, 0.1),
+        new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.85 })
+    );
+    strut.position.set(xx, 1.2, -1.47); playerGroup.add(strut);
+});
+
+// Exhaust pipes — behind cabin (rear side, +z)
 [1, -1].forEach(side => {
     const exh = new THREE.Mesh(
         new THREE.CylinderGeometry(0.07, 0.09, 1.1, 8),
         new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.9 })
     );
-    exh.position.set(side * 0.82, 2.38, -0.5);
+    exh.position.set(side * 0.82, 2.38, 0.45);
     playerGroup.add(exh);
 });
 
-// Headlights
-[0.6, -0.6].forEach(xPos => {
+// Headlights at FRONT of truck (-z side)
+[0.55, -0.55].forEach(xPos => {
     const lgt = new THREE.Mesh(
         new THREE.CylinderGeometry(0.17, 0.17, 0.09, 12),
         new THREE.MeshStandardMaterial({ color: 0xffffcc, emissive: 0xffff88, emissiveIntensity: 0.9 })
     );
-    lgt.rotation.x = Math.PI / 2; lgt.position.set(xPos, 1.44, 1.46);
+    lgt.rotation.x = Math.PI / 2; lgt.position.set(xPos, 1.44, -1.47);
     playerGroup.add(lgt);
+});
+
+// Taillights at REAR of truck (+z side, facing camera) — red
+[0.55, -0.55].forEach(xPos => {
+    const tail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.15, 0.08, 12),
+        new THREE.MeshStandardMaterial({ color: 0xff1111, emissive: 0xff0000, emissiveIntensity: 1.0 })
+    );
+    tail.rotation.x = Math.PI / 2; tail.position.set(xPos, 1.44, 1.47);
+    playerGroup.add(tail);
 });
 
 // "10" decals on sides
@@ -429,7 +448,7 @@ function animate() {
         // Płynne lerp do środka aktualnego pasa
         playerGroup.position.x += (targetX - playerGroup.position.x) * 0.16;
         playerGroup.rotation.z = (playerGroup.position.x - targetX) * 0.08;
-        playerGroup.rotation.x = Math.sin(Date.now() * 0.01) * 0.04;
+        // rotation.x intentionally removed — no idle rocking, lean only on turns
     }
 
     // Scrollowanie linii jezdni — tylko gdy gra trwa
