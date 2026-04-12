@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Desert Runner 3D</title>
+    <title>Max's Adventures</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,20 +15,31 @@
                 <span id="level-val" class="value">1</span>
             </div>
             <div class="stat-box" style="margin-left: 10px;">
-                <span class="label">SCORE</span>
+                <span class="label">WYNIK</span>
                 <span id="score-val" class="value">0</span>
             </div>
         </div>
-        
+
         <div id="lives-panel">
-            <span class="label">LIVES</span>
+            <span class="label">ŻYCIA</span>
             <div id="hearts">❤❤❤</div>
         </div>
-        
-        <div id="controls-hint" style="position: absolute; bottom: 20px; width: 100%; text-align: center; color: white; opacity: 0.7; font-size: 12px;">
-            PC: Strzałki / A-D &nbsp;|&nbsp; Mobile: Dotknij i przesuń
+
+        <div id="legend-panel">
+            <div class="legend-item danger-item">
+                <span class="legend-icon">🛢</span>
+                <span class="legend-text">UNIKAJ</span>
+            </div>
+            <div class="legend-item collect-item">
+                <span class="legend-icon">🪙</span>
+                <span class="legend-text">ZBIERAJ</span>
+            </div>
         </div>
-        
+
+        <div id="controls-hint">
+            PC: Strzałki / A&ndash;D &nbsp;|&nbsp; Mobile: Przesuń palcem
+        </div>
+
         <div id="game-over">
             <h1>KONIEC GRY</h1>
             <p>Twój wynik: <span id="final-score">0</span></p>
