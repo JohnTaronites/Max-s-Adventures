@@ -532,6 +532,7 @@ function makeCoinGroup() {
         g.add(dot);
     }
 
+    return g;
 }
 
 // --- SPAWNING (FALE - MAKS 2 PASY ZABLOKOWANE) ---
