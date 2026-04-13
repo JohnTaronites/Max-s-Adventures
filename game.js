@@ -33,8 +33,8 @@ scene.background = new THREE.Color(0x87CEEB);
 scene.fog = new THREE.Fog(0x87CEEB, 40, 90);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0, 4.5, 11);
-camera.lookAt(0, 0.5, -8);
+camera.position.set(0, 6.5, 9);
+camera.lookAt(0, 0.5, -5);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -94,27 +94,167 @@ for (let i = 0; i < DASH_COUNT; i++) {
     });
 }
 
-// --- DRZEWA (DEKORACJE) ---
-function createTree(x, z, scale) {
-    const group = new THREE.Group();
-    const trunkGeo = new THREE.CylinderGeometry(0.2 * scale, 0.3 * scale, 1.5 * scale, 8);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B5E3C });
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    trunk.position.y = 0.75 * scale;
-    trunk.castShadow = true;
-    group.add(trunk);
-    const crownGeo = new THREE.ConeGeometry(1.2 * scale, 2.5 * scale, 8);
-    const crownMat = new THREE.MeshStandardMaterial({ color: 0x2d7a2d, flatShading: true });
-    const crown = new THREE.Mesh(crownGeo, crownMat);
-    crown.position.y = 2.75 * scale;
-    crown.castShadow = true;
-    group.add(crown);
-    group.position.set(x, 0, z);
-    scene.add(group);
+// --- OTOCZENIE DROGI (SCROLLOWANE DEKORACJE) ---
+const SCENERY_SPACING = 20;
+const SCENERY_PER_SIDE = 14;
+const sceneryItems = [];
+
+function makeSceneryGroup(type) {
+    const g = new THREE.Group();
+    if (type === 'tree') {
+        const scale = 0.8 + Math.random() * 0.5;
+        const trunk = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.2*scale, 0.3*scale, 1.5*scale, 8),
+            new THREE.MeshStandardMaterial({ color: 0x8B5E3C })
+        );
+        trunk.position.y = 0.75 * scale;
+        g.add(trunk);
+        const crown = new THREE.Mesh(
+            new THREE.ConeGeometry(1.2*scale, 2.5*scale, 8),
+            new THREE.MeshStandardMaterial({ color: 0x2d7a2d, flatShading: true })
+        );
+        crown.position.y = 2.75 * scale;
+        g.add(crown);
+    } else if (type === 'barn') {
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(3, 2.5, 4),
+            new THREE.MeshStandardMaterial({ color: 0xb03030 })
+        );
+        body.position.y = 1.25;
+        g.add(body);
+        const roof = new THREE.Mesh(
+            new THREE.ConeGeometry(2.5, 1.5, 4),
+            new THREE.MeshStandardMaterial({ color: 0x8B0000 })
+        );
+        roof.position.y = 3.25;
+        roof.rotation.y = Math.PI / 4;
+        g.add(roof);
+        const win = new THREE.Mesh(
+            new THREE.BoxGeometry(0.6, 0.6, 0.1),
+            new THREE.MeshStandardMaterial({ color: 0xffffaa })
+        );
+        win.position.set(0, 1.8, 2.05);
+        g.add(win);
+    } else if (type === 'tractor') {
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(1.5, 1, 3),
+            new THREE.MeshStandardMaterial({ color: 0x228822 })
+        );
+        body.position.y = 1.2;
+        g.add(body);
+        const cabin = new THREE.Mesh(
+            new THREE.BoxGeometry(1.3, 0.9, 1.4),
+            new THREE.MeshStandardMaterial({ color: 0x33aa33 })
+        );
+        cabin.position.set(0, 2.1, -0.4);
+        g.add(cabin);
+        [[0.85, 0.65, 0.6], [-0.85, 0.65, 0.6]].forEach(([wx, wy, wz]) => {
+            const wh = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.6, 0.6, 0.35, 10),
+                new THREE.MeshStandardMaterial({ color: 0x111111 })
+            );
+            wh.rotation.z = Math.PI / 2;
+            wh.position.set(wx, wy, wz);
+            g.add(wh);
+        });
+        [[0.75, 0.45, -0.9], [-0.75, 0.45, -0.9]].forEach(([wx, wy, wz]) => {
+            const wh = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.4, 0.4, 0.25, 8),
+                new THREE.MeshStandardMaterial({ color: 0x111111 })
+            );
+            wh.rotation.z = Math.PI / 2;
+            wh.position.set(wx, wy, wz);
+            g.add(wh);
+        });
+        const pipe = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.08, 0.08, 1, 6),
+            new THREE.MeshStandardMaterial({ color: 0x888888 })
+        );
+        pipe.position.set(0.4, 2.6, -0.6);
+        g.add(pipe);
+    } else if (type === 'cow') {
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 0.7, 2),
+            new THREE.MeshStandardMaterial({ color: 0xffffff })
+        );
+        body.position.y = 1.05;
+        g.add(body);
+        const spot = new THREE.Mesh(
+            new THREE.BoxGeometry(0.5, 0.71, 0.7),
+            new THREE.MeshStandardMaterial({ color: 0x222222 })
+        );
+        spot.position.set(0.2, 1.05, 0.2);
+        g.add(spot);
+        const head = new THREE.Mesh(
+            new THREE.BoxGeometry(0.7, 0.6, 0.7),
+            new THREE.MeshStandardMaterial({ color: 0xffffff })
+        );
+        head.position.set(0, 1.3, -1.15);
+        g.add(head);
+        [-0.4, 0.4].forEach(hx => {
+            const ear = new THREE.Mesh(
+                new THREE.BoxGeometry(0.15, 0.2, 0.1),
+                new THREE.MeshStandardMaterial({ color: 0xffcccc })
+            );
+            ear.position.set(hx, 1.6, -1.15);
+            g.add(ear);
+        });
+        [[-0.4, 0.35, 0.55], [0.4, 0.35, 0.55], [-0.4, 0.35, -0.55], [0.4, 0.35, -0.55]].forEach(([lx, ly, lz]) => {
+            const leg = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, 0.7, 0.2),
+                new THREE.MeshStandardMaterial({ color: 0xffffff })
+            );
+            leg.position.set(lx, ly, lz);
+            g.add(leg);
+        });
+    } else if (type === 'haystack') {
+        const base = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.2, 1.4, 1.4, 10),
+            new THREE.MeshStandardMaterial({ color: 0xd4aa30 })
+        );
+        base.position.y = 0.7;
+        g.add(base);
+        const top = new THREE.Mesh(
+            new THREE.SphereGeometry(1.1, 8, 6),
+            new THREE.MeshStandardMaterial({ color: 0xc49a20 })
+        );
+        top.position.y = 1.7;
+        g.add(top);
+    } else if (type === 'sunflowers') {
+        for (let idx = 0; idx < 4; idx++) {
+            const stem = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.06, 0.08, 1.8, 6),
+                new THREE.MeshStandardMaterial({ color: 0x3a7a1a })
+            );
+            stem.position.set((idx - 1.5) * 0.7, 0.9, 0);
+            g.add(stem);
+            const flower = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.35, 0.35, 0.1, 10),
+                new THREE.MeshStandardMaterial({ color: 0xffdd00 })
+            );
+            flower.position.set((idx - 1.5) * 0.7, 1.85, 0);
+            g.add(flower);
+            const center = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.15, 0.12, 8),
+                new THREE.MeshStandardMaterial({ color: 0x663300 })
+            );
+            center.position.set((idx - 1.5) * 0.7, 1.92, 0);
+            g.add(center);
+        }
+    }
+    return g;
 }
-for (let i = 0; i < 22; i++) {
-    createTree(-13 - Math.random() * 5, -i * 10 - 5, 0.8 + Math.random() * 0.5);
-    createTree(13 + Math.random() * 5, -i * 10 - 5, 0.8 + Math.random() * 0.5);
+
+const SCENERY_TYPES = ['tree', 'tree', 'tree', 'barn', 'tractor', 'cow', 'haystack', 'sunflowers'];
+for (let i = 0; i < SCENERY_PER_SIDE; i++) {
+    const z = -i * SCENERY_SPACING;
+    [-1, 1].forEach(side => {
+        const type = SCENERY_TYPES[Math.floor(Math.random() * SCENERY_TYPES.length)];
+        const grp = makeSceneryGroup(type);
+        grp.position.set(side * (ROAD_WIDTH / 2 + 3 + Math.random() * 3), 0, z);
+        scene.add(grp);
+        sceneryItems.push({ group: grp, side });
+    });
 }
 
 // --- GRACZ (MONSTER TRUCK) ---
@@ -353,9 +493,16 @@ function spawnWave() {
 
 function spawnCollectible() {
     if (isGameOver) return;
-    const g = makeCoinGroup();
-    const lane = Math.floor(Math.random() * 3) - 1;
     const spawnZ = -(PLAYER_Z + 300 * gameSpeed);
+    const usedLanes = new Set(
+        obstacles
+            .filter(o => Math.abs(o.position.z - spawnZ) < 12)
+            .map(o => Math.round(o.position.x / LANE_WIDTH))
+    );
+    const freeLanes = [-1, 0, 1].filter(l => !usedLanes.has(l));
+    const pool = freeLanes.length > 0 ? freeLanes : [-1, 0, 1];
+    const lane = pool[Math.floor(Math.random() * pool.length)];
+    const g = makeCoinGroup();
     g.position.set(lane * LANE_WIDTH, 1.1, spawnZ);
     g.rotation.x = Math.PI / 2;
     scene.add(g);
@@ -456,6 +603,19 @@ function animate() {
         for (const dash of dashLines) {
             dash.position.z += gameSpeed;
             if (dash.position.z > 10) dash.position.z -= DASH_COUNT * DASH_SPACING;
+        }
+        // Scroll scenery decorations
+        for (const item of sceneryItems) {
+            item.group.position.z += gameSpeed;
+            if (item.group.position.z > PLAYER_Z + 20) {
+                let minZ = Infinity;
+                for (const other of sceneryItems) {
+                    if (other.side === item.side) minZ = Math.min(minZ, other.group.position.z);
+                }
+                item.group.position.z = minZ - SCENERY_SPACING;
+                const s = item.side;
+                item.group.position.x = s * (ROAD_WIDTH / 2 + 3 + Math.random() * 3);
+            }
         }
     }
 
