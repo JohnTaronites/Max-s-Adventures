@@ -437,31 +437,101 @@ playerGroup.position.set(0, 0, PLAYER_Z);
 scene.add(playerGroup);
 // --- FABRYKI MESH ---
 function makeBarrelGroup() {
+    // Monkey face obstacle
     const g = new THREE.Group();
-    const barrelBodyGeo   = new THREE.CylinderGeometry(0.45, 0.45, 1.0, 12);
-    const barrelBodyMat   = new THREE.MeshStandardMaterial({ color: 0xdd1100, roughness: 0.7 });
-    const barrelStripeGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.15, 12);
-    const barrelStripeMat = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
-    const barrelTopGeo    = new THREE.CylinderGeometry(0.45, 0.45, 0.08, 12);
-    const barrelTopMat    = new THREE.MeshStandardMaterial({ color: 0xaa0a00 });
-    const b = new THREE.Mesh(barrelBodyGeo, barrelBodyMat);
-    b.castShadow = true;
-    g.add(b);
-    const s1 = new THREE.Mesh(barrelStripeGeo, barrelStripeMat); s1.position.y =  0.32; g.add(s1);
-    const s2 = new THREE.Mesh(barrelStripeGeo, barrelStripeMat); s2.position.y = -0.32; g.add(s2);
-    const t  = new THREE.Mesh(barrelTopGeo, barrelTopMat);       t.position.y  =  0.54; g.add(t);
+    const brownMat  = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+    const ltBrwnMat = new THREE.MeshStandardMaterial({ color: 0xD2934A });
+    const darkMat   = new THREE.MeshStandardMaterial({ color: 0x1a0a00 });
+    const whiteMat  = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const pinkMat   = new THREE.MeshStandardMaterial({ color: 0xff9999 });
+
+    // Head
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.55, 16, 12), brownMat);
+    head.position.y = 0.55; head.castShadow = true;
+    g.add(head);
+
+    // Muzzle (flat lighter sphere on front)
+    const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), ltBrwnMat);
+    muzzle.scale.z = 0.55;
+    muzzle.position.set(0, 0.38, -0.42);
+    g.add(muzzle);
+
+    // Ears
+    [-0.58, 0.58].forEach(ex => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), brownMat);
+        ear.position.set(ex, 0.72, 0);
+        g.add(ear);
+        const earInner = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), pinkMat);
+        earInner.position.set(ex * 1.04, 0.72, -0.06);
+        g.add(earInner);
+    });
+
+    // Eyes (white + dark pupil)
+    [-0.2, 0.2].forEach(ex => {
+        const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), whiteMat);
+        eyeWhite.position.set(ex, 0.68, -0.48);
+        g.add(eyeWhite);
+        const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), darkMat);
+        pupil.position.set(ex, 0.68, -0.56);
+        g.add(pupil);
+    });
+
+    // Nostrils
+    [-0.1, 0.1].forEach(nx => {
+        const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 4), darkMat);
+        nostril.position.set(nx, 0.35, -0.65);
+        g.add(nostril);
+    });
+
+    // Eyebrows
+    [-0.2, 0.2].forEach(ex => {
+        const brow = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.05, 0.06),
+            darkMat
+        );
+        brow.position.set(ex, 0.81, -0.5);
+        brow.rotation.z = ex < 0 ? 0.3 : -0.3;
+        g.add(brow);
+    });
+
     return g;
 }
 
 function makeCoinGroup() {
+    // Oreo cookie collectible
     const g = new THREE.Group();
-    const coinGeo    = new THREE.CylinderGeometry(0.42, 0.42, 0.12, 20);
-    const coinMat    = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.15, metalness: 0.85, transparent: true });
-    const coinRimGeo = new THREE.TorusGeometry(0.42, 0.04, 8, 20);
-    const coinRimMat = new THREE.MeshStandardMaterial({ color: 0xffaa00, metalness: 0.9, transparent: true });
-    g.add(new THREE.Mesh(coinGeo, coinMat));
-    g.add(new THREE.Mesh(coinRimGeo, coinRimMat));
-    return g;
+    const darkChoc  = new THREE.MeshStandardMaterial({ color: 0x1a0f05, roughness: 0.8, transparent: true });
+    const cream     = new THREE.MeshStandardMaterial({ color: 0xf5f0e8, roughness: 0.6, transparent: true });
+    const chocEdge  = new THREE.MeshStandardMaterial({ color: 0x2d1a08, roughness: 0.9, transparent: true });
+
+    // Bottom biscuit disc
+    const bot = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.12, 24), darkChoc);
+    bot.position.y = -0.1;
+    g.add(bot);
+
+    // Cream filling
+    const fill = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.1, 24), cream);
+    fill.position.y = 0;
+    g.add(fill);
+
+    // Top biscuit disc
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.12, 24), darkChoc);
+    top.position.y = 0.1;
+    g.add(top);
+
+    // Embossed ring on top biscuit
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.03, 6, 20), chocEdge);
+    ring.position.y = 0.17;
+    g.add(ring);
+
+    // Small dots pattern on top
+    for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.04, 6), cream);
+        dot.position.set(Math.cos(angle) * 0.28, 0.18, Math.sin(angle) * 0.28);
+        g.add(dot);
+    }
+
 }
 
 // --- SPAWNING (FALE - MAKS 2 PASY ZABLOKOWANE) ---
