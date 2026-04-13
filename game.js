@@ -3,7 +3,7 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 // --- KONFIGURACJA ---
 // PrÄ™dkoÅ›Ä‡ bazowa i wzrost per poziom (zamiast ciÄ…gÅ‚ego maÅ‚ego przyrostu)
-const SPEED_BASE        = 0.090;  // start bardzo wolno
+const SPEED_BASE        = 0.120;  // start bardzo wolno
 const SPEED_PER_LEVEL   = 0.016;  // wzrost per poziom
 const SCORE_PER_LEVEL   = 400;    // co ile punktÃ³w nowy poziom
 const LANE_WIDTH        = 2.5;
@@ -33,7 +33,7 @@ scene.background = new THREE.Color(0x87CEEB);
 scene.fog = new THREE.Fog(0x87CEEB, 40, 90);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0, 6.5, 9);
+camera.position.set(0, 6.5, 14);
 camera.lookAt(0, 0.5, -5);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
