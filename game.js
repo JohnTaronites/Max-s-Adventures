@@ -552,7 +552,7 @@ function spawnWave() {
     // Zawsze zostawiamy przynajmniej 1 wolny pas (max 2 beczki na falÄ™)
     const count = Math.random() < 0.3 ? 2 : 1;
     // Spawn z dostosowany do prędkości — ~300 klatek dojazdu
-    const spawnZ = -(PLAYER_Z + 300 * gameSpeed);
+    const spawnZ = -(PLAYER_Z + 180 * gameSpeed);
     for (let k = 0; k < count; k++) {
         const g = makeBarrelGroup();
         g.position.set(lanes[k] * LANE_WIDTH, 0, spawnZ);
@@ -563,7 +563,7 @@ function spawnWave() {
 
 function spawnCollectible() {
     if (isGameOver) return;
-    const spawnZ = -(PLAYER_Z + 300 * gameSpeed);
+    const spawnZ = -(PLAYER_Z + 180 * gameSpeed);
     const usedLanes = new Set(
         obstacles
             .filter(o => Math.abs(o.position.z - spawnZ) < 12)
@@ -574,7 +574,7 @@ function spawnCollectible() {
     const lane = pool[Math.floor(Math.random() * pool.length)];
     const g = makeCoinGroup();
     g.position.set(lane * LANE_WIDTH, 1.1, spawnZ);
-    g.rotation.x = Math.PI / 2;
+    // brak rotation.x — Oreo leży płasko, widoczne z góry
     scene.add(g);
     collectibles.push(g);
 }
@@ -704,11 +704,11 @@ function animate() {
         spawnCollectible();
         collectibleCountdown = 22 + Math.random() * 8;
     }
-    // --- ObsÅ‚uga przeszkÃ³d (beczki) ---
+    // --- Obsługa przeszkód (małpki) ---
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obj = obstacles[i];
         obj.position.z += gameSpeed;
-        obj.rotation.y += 0.02;
+        // brak obrotu — małpka patrzy prosto na gracza
 
         // Kolizja: sprawdzamy XZ i zakres Z zbliÅ¼ony do gracza
         if (
@@ -736,7 +736,7 @@ function animate() {
         if (obj.userData.dying) continue; // juÅ¼ w animacji
 
         obj.position.z += gameSpeed;
-        obj.rotation.z += 0.06;
+        obj.rotation.y += 0.04;   // Oreo obraca się płasko
         obj.position.y = 1.1 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.25;
 
         if (
