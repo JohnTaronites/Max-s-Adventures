@@ -519,19 +519,6 @@ function makeCoinGroup() {
     top.position.y = 0.1;
     g.add(top);
 
-    // Embossed ring on top biscuit
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.03, 6, 20), chocEdge);
-    ring.position.y = 0.17;
-    g.add(ring);
-
-    // Small dots pattern on top
-    for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2;
-        const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.04, 6), cream);
-        dot.position.set(Math.cos(angle) * 0.28, 0.18, Math.sin(angle) * 0.28);
-        g.add(dot);
-    }
-
     return g;
 }
 
@@ -574,7 +561,7 @@ function spawnCollectible() {
     const pool = freeLanes.length > 0 ? freeLanes : [-1, 0, 1];
     const lane = pool[Math.floor(Math.random() * pool.length)];
     const g = makeCoinGroup();
-    g.position.set(lane * LANE_WIDTH, 1.1, spawnZ);
+    g.position.set(lane * LANE_WIDTH, 1.6, spawnZ);
     // brak rotation.x — Oreo leży płasko, widoczne z góry
     scene.add(g);
     collectibles.push(g);
@@ -709,7 +696,7 @@ function animate() {
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obj = obstacles[i];
         obj.position.z += gameSpeed;
-        // brak obrotu — małpka patrzy prosto na gracza
+        obj.position.y = 0.55 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.2; // bob góra-dół
 
         // Kolizja: sprawdzamy XZ i zakres Z zbliÅ¼ony do gracza
         if (
@@ -738,7 +725,7 @@ function animate() {
 
         obj.position.z += gameSpeed;
         obj.rotation.y += 0.04;   // Oreo obraca się płasko
-        obj.position.y = 1.1 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.25;
+        obj.position.y = 1.6 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.25;
 
         if (
             obj.position.z > COLLISION_Z_MIN &&
