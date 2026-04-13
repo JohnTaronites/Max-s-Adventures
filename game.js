@@ -450,10 +450,10 @@ function makeBarrelGroup() {
     head.position.y = 0.55; head.castShadow = true;
     g.add(head);
 
-    // Muzzle (flat lighter sphere on front)
+    // Muzzle (flat lighter sphere facing camera = +z)
     const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), ltBrwnMat);
     muzzle.scale.z = 0.55;
-    muzzle.position.set(0, 0.38, -0.42);
+    muzzle.position.set(0, 0.38, 0.42);
     g.add(muzzle);
 
     // Ears
@@ -462,34 +462,34 @@ function makeBarrelGroup() {
         ear.position.set(ex, 0.72, 0);
         g.add(ear);
         const earInner = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), pinkMat);
-        earInner.position.set(ex * 1.04, 0.72, -0.06);
+        earInner.position.set(ex * 1.04, 0.72, 0.06);
         g.add(earInner);
     });
 
-    // Eyes (white + dark pupil)
+    // Eyes (white + dark pupil) facing camera = +z
     [-0.2, 0.2].forEach(ex => {
         const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), whiteMat);
-        eyeWhite.position.set(ex, 0.68, -0.48);
+        eyeWhite.position.set(ex, 0.68, 0.48);
         g.add(eyeWhite);
         const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5), darkMat);
-        pupil.position.set(ex, 0.68, -0.56);
+        pupil.position.set(ex, 0.68, 0.56);
         g.add(pupil);
     });
 
-    // Nostrils
+    // Nostrils facing camera = +z
     [-0.1, 0.1].forEach(nx => {
         const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.045, 6, 4), darkMat);
-        nostril.position.set(nx, 0.35, -0.65);
+        nostril.position.set(nx, 0.35, 0.65);
         g.add(nostril);
     });
 
-    // Eyebrows
+    // Eyebrows facing camera = +z
     [-0.2, 0.2].forEach(ex => {
         const brow = new THREE.Mesh(
             new THREE.BoxGeometry(0.18, 0.05, 0.06),
             darkMat
         );
-        brow.position.set(ex, 0.81, -0.5);
+        brow.position.set(ex, 0.81, 0.5);
         brow.rotation.z = ex < 0 ? 0.3 : -0.3;
         g.add(brow);
     });
@@ -555,7 +555,7 @@ function spawnWave() {
     const spawnZ = -(PLAYER_Z + 300 * gameSpeed);
     for (let k = 0; k < count; k++) {
         const g = makeBarrelGroup();
-        g.position.set(lanes[k] * LANE_WIDTH, 0.5, spawnZ);
+        g.position.set(lanes[k] * LANE_WIDTH, 0, spawnZ);
         scene.add(g);
         obstacles.push(g);
     }
