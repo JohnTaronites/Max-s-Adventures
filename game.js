@@ -26,6 +26,7 @@ let oreoCount = 0;
 let isGameOver = false;
 let isPaused   = false;
 let isStarted  = false;
+let lastTime   = 0;
 
 // --- DŹWIĘKI ---
 // Web Audio API — reliable on mobile (HTML Audio gets suspended)
