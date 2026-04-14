@@ -28,10 +28,13 @@ let isPaused   = false;
 let isStarted  = false;
 let lastTime   = 0;
 
-// --- DŹWIĘKI ---
+// --- DźWIĘKI ---
 // Web Audio API — reliable on mobile (HTML Audio gets suspended)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 const sfxBuffers = {};
+let musicBuffer = null;
+let musicSource = null;
+let musicGain   = null;
 (async function loadSounds() {
     const files = {
         mniam:    'sounds/mniam.mp3',
@@ -46,6 +49,12 @@ const sfxBuffers = {};
             sfxBuffers[name] = await audioCtx.decodeAudioData(arr);
         } catch(e) { console.warn('Sound load failed:', name); }
     }
+    // Load background music
+    try {
+        const resp = await fetch('sounds/music.m4a');
+        const arr  = await resp.arrayBuffer();
+        musicBuffer = await audioCtx.decodeAudioData(arr);
+    } catch(e) { console.warn('Music load failed:', e); }
 })();
 function playSound(name) {
     if (!sfxBuffers[name]) return;
@@ -55,19 +64,40 @@ function playSound(name) {
     src.connect(audioCtx.destination);
     src.start(0);
 }
+function startMusic() {
+    if (!musicBuffer || musicSource) return;
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.25; // przyciszona do 25%
+    musicSource = audioCtx.createBufferSource();
+    musicSource.buffer = musicBuffer;
+    musicSource.loop = true;
+    musicSource.connect(musicGain);
+    musicGain.connect(audioCtx.destination);
+    musicSource.start(0);
+}
+function stopMusic() {
+    if (musicSource) {
+        try { musicSource.stop(); } catch(e) {}
+        musicSource = null;
+    }
+}
 
 // Eksponuj funkcje na window dla onclick w HTML
 window.startGame = function() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     isStarted = true;
     document.getElementById('start-screen').style.display = 'none';
+    startMusic();
 };
 window.togglePause = function() {
     if (isGameOver || !isStarted) return;
     isPaused = !isPaused;
     document.getElementById('pause-overlay').style.display = isPaused ? 'block' : 'none';
-    document.getElementById('pause-btn').textContent = isPaused ? '▶' : '⏸';
-};
+    document.getElementById('pause-btn').textContent = isPaused ? '▶' : '⏸';    if (isPaused) {
+        if (audioCtx.state === 'running') audioCtx.suspend();
+    } else {
+        audioCtx.resume();
+    }};
 window.mobileTap = function(dir) {
     changeLane(dir);
 };
@@ -970,6 +1000,7 @@ function handleCollision() {
 
 function gameOver() {
     isGameOver = true;
+    stopMusic();
     playSound('owno');
     document.getElementById('game-over').style.display = 'block';
     document.getElementById('final-score').innerText = score;
