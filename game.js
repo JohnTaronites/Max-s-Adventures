@@ -565,33 +565,35 @@ function makeBananaGroup() {
     const tipMat    = new THREE.MeshStandardMaterial({ color: 0xC8A000, roughness: 0.7 });
     const stemMat   = new THREE.MeshStandardMaterial({ color: 0x5a3a00, roughness: 0.8 });
 
-    // Upright banana: segments rise in Y, curve in X — classic banana silhouette
-    const segments = 7;
+// Circular-arc banana: segments follow a circle curve for pronounced C-bend
+    const segments = 9;
+    const BEND = 1.55;   // total arc ~89 degrees = real banana curvature
+    const R    = 1.0;    // radius of the arc
     for (let s = 0; s < segments; s++) {
-        const t = s / (segments - 1);  // 0..1
-        const r = 0.17 - t * 0.07;     // taper from thick base to thin tip
+        const t = s / (segments - 1);
+        const r = 0.19 - t * 0.10;  // taper: fat base, pointy tip
         const seg = new THREE.Mesh(
-            new THREE.CylinderGeometry(r, r + 0.01, 0.27, 8),
+            new THREE.CylinderGeometry(r * 0.9, r, 0.26, 8),
             s === segments - 1 ? tipMat : yellowMat
         );
-        // Arc: banana curves in X as it rises in Y (standing position)
-        const angle = t * 0.75;   // total bend ~0.75 rad
+        const angle = t * BEND;
+        // Arc formula: place segments along circle of radius R
         seg.position.set(
-            Math.sin(angle) * 0.45,   // horizontal curve in X
-            0.1 + t * 1.0,            // vertical: from y=0.1 (base) to y=1.1 (tip)
+            R * Math.sin(angle),
+            R * (1 - Math.cos(angle)) - 0.35,
             0
         );
         seg.rotation.z = -angle;
         g.add(seg);
     }
 
-    // Stem nub at base
+    // Stem nub at the base (bottom of banana)
     const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.07, 0.09, 0.20, 6),
+        new THREE.CylinderGeometry(0.06, 0.09, 0.22, 6),
         stemMat
     );
-    stem.position.set(0.02, 0.06, 0);
-    stem.rotation.z = 0.1;
+    stem.position.set(0.04, -0.38, 0);
+    stem.rotation.z = -0.15;
     g.add(stem);
 
     return g;
@@ -859,7 +861,7 @@ function animate() {
         const obj = bananas[i];
         obj.position.z += gameSpeed;
         obj.rotation.y += 0.03;
-        obj.position.y = 0.8 + Math.sin(Date.now() * 0.003 + i * 2.1) * 0.15;
+        obj.position.y = 0.95 + Math.sin(Date.now() * 0.003 + i * 2.1) * 0.12;
 
         if (
             obj.position.z > COLLISION_Z_MIN &&
