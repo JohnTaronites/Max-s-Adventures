@@ -565,33 +565,33 @@ function makeBananaGroup() {
     const tipMat    = new THREE.MeshStandardMaterial({ color: 0xC8A000, roughness: 0.7 });
     const stemMat   = new THREE.MeshStandardMaterial({ color: 0x5a3a00, roughness: 0.8 });
 
-    // Main banana body — curved using several rotated cylinders
+    // Upright banana: segments rise in Y, curve in X — classic banana silhouette
     const segments = 7;
     for (let s = 0; s < segments; s++) {
         const t = s / (segments - 1);  // 0..1
-        const r = 0.13 - t * 0.04;     // taper toward tip
+        const r = 0.17 - t * 0.07;     // taper from thick base to thin tip
         const seg = new THREE.Mesh(
-            new THREE.CylinderGeometry(r, r + 0.01, 0.22, 8),
+            new THREE.CylinderGeometry(r, r + 0.01, 0.27, 8),
             s === segments - 1 ? tipMat : yellowMat
         );
-        // Arc: rotate and offset to simulate banana curve
+        // Arc: banana curves in X as it rises in Y (standing position)
         const angle = t * 0.75;   // total bend ~0.75 rad
         seg.position.set(
-            Math.sin(angle) * 0.55,
-            0.6 + t * 0.05,
+            Math.sin(angle) * 0.45,   // horizontal curve in X
+            0.1 + t * 1.0,            // vertical: from y=0.1 (base) to y=1.1 (tip)
             0
         );
         seg.rotation.z = -angle;
         g.add(seg);
     }
 
-    // Stem nub at top
+    // Stem nub at base
     const stem = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.06, 0.08, 0.18, 6),
+        new THREE.CylinderGeometry(0.07, 0.09, 0.20, 6),
         stemMat
     );
-    stem.position.set(0, 0.62, 0);
-    stem.rotation.z = 0.3;
+    stem.position.set(0.02, 0.06, 0);
+    stem.rotation.z = 0.1;
     g.add(stem);
 
     return g;
@@ -859,7 +859,7 @@ function animate() {
         const obj = bananas[i];
         obj.position.z += gameSpeed;
         obj.rotation.y += 0.03;
-        obj.position.y = 1.4 + Math.sin(Date.now() * 0.003 + i * 2.1) * 0.22;
+        obj.position.y = 0.8 + Math.sin(Date.now() * 0.003 + i * 2.1) * 0.15;
 
         if (
             obj.position.z > COLLISION_Z_MIN &&
