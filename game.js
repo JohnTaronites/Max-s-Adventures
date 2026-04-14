@@ -3,8 +3,8 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
 // --- KONFIGURACJA ---
 // PrÄ™dkoÅ›Ä‡ bazowa i wzrost per poziom (zamiast ciÄ…gÅ‚ego maÅ‚ego przyrostu)
-const SPEED_BASE        = 0.120;  // start bardzo wolno
-const SPEED_PER_LEVEL   = 0.016;  // wzrost per poziom
+const SPEED_BASE        = 0.18;   // podwyższone po normalizacji delta-time
+const SPEED_PER_LEVEL   = 0.022;  // wzrost per poziom
 const SCORE_PER_LEVEL   = 400;    // co ile punktÃ³w nowy poziom
 const LANE_WIDTH        = 2.5;
 const ROAD_WIDTH        = 10;
@@ -982,6 +982,8 @@ function onResize() {
     const container = document.getElementById('canvas-container');
     container.style.width  = w + 'px';
     container.style.height = h + 'px';
+    // Wider FOV on portrait mobile so side lanes are fully visible
+    camera.fov = (h > w) ? 80 : 60;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
