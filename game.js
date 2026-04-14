@@ -22,7 +22,45 @@ let gameSpeed = SPEED_BASE;
 let score     = 0;
 let level     = 1;
 let lives     = 3;
+let oreoCount = 0;
 let isGameOver = false;
+let isPaused   = false;
+let isStarted  = false;
+
+// --- DŹWIĘKI ---
+function makeSound(src) {
+    const a = new Audio(src);
+    a.preload = 'auto';
+    return a;
+}
+const sfx = {
+    mniam:   makeSound('sounds/mniam.mp3'),
+    aumonkey: makeSound('sounds/aumonkey.mp3'),
+    owno:    makeSound('sounds/owno.mp3'),
+    faster:  makeSound('sounds/itsfaster.mp3'),
+    monkey:  makeSound('sounds/monkey-on-theroad.mp3'),
+};
+function playSound(name) {
+    const s = sfx[name];
+    if (!s) return;
+    s.currentTime = 0;
+    s.play().catch(() => {});
+}
+
+// Eksponuj funkcje na window dla onclick w HTML
+window.startGame = function() {
+    isStarted = true;
+    document.getElementById('start-screen').style.display = 'none';
+};
+window.togglePause = function() {
+    if (isGameOver || !isStarted) return;
+    isPaused = !isPaused;
+    document.getElementById('pause-overlay').style.display = isPaused ? 'block' : 'none';
+    document.getElementById('pause-btn').textContent = isPaused ? '▶' : '⏸';
+};
+window.mobileTap = function(dir) {
+    changeLane(dir);
+};
 
 // Animowane obiekty po kolizji/zebraniu
 const dyingObjects = []; // { group, age, vx, vy, vz, type: 'barrel'|'coin' }
@@ -537,9 +575,7 @@ function shuffle(arr) {
 function spawnWave() {
     if (isGameOver) return;
     const lanes = shuffle([-1, 0, 1]);
-    // Zawsze zostawiamy przynajmniej 1 wolny pas (max 2 beczki na falÄ™)
     const count = Math.random() < 0.3 ? 2 : 1;
-    // Spawn z dostosowany do prędkości — ~300 klatek dojazdu
     const spawnZ = -(PLAYER_Z + 180 * gameSpeed);
     for (let k = 0; k < count; k++) {
         const g = makeBarrelGroup();
@@ -547,6 +583,7 @@ function spawnWave() {
         scene.add(g);
         obstacles.push(g);
     }
+    playSound('monkey'); // raz na falę, niezależnie od liczby małpek
 }
 
 function spawnCollectible() {
@@ -630,6 +667,7 @@ function killBarrel(group) {
 
 // --- ANIMACJA ZEBRANIA MONETY (leci w gÃ³rÄ™ i zanika) ---
 function collectCoin(group) {
+    playSound('mniam');
     dyingObjects.push({
         group,
         age:  0,
@@ -647,6 +685,12 @@ function collectCoin(group) {
 // --- PÄ˜TLA GRY ---
 function animate() {
     requestAnimationFrame(animate);
+
+    if (!isStarted || isPaused || isGameOver) {
+        // Still render the scene so it looks alive on start screen
+        renderer.render(scene, camera);
+        return;
+    }
 
     if (!isGameOver) {
         if (laneCooldown > 0) laneCooldown--;
@@ -735,6 +779,7 @@ function animate() {
             collectibles.splice(i, 1);
             collectCoin(obj);
             updateScore(50);
+            updateOreo();
             continue;
         }
 
@@ -785,15 +830,20 @@ function updateScore(val) {
         level = newLevel;
         gameSpeed = SPEED_BASE + (level - 1) * SPEED_PER_LEVEL;
         document.getElementById('level-val').innerText = level;
+        playSound('faster');
     }
+}
+
+function updateOreo() {
+    oreoCount++;
+    document.getElementById('oreo-val').innerText = '\uD83C\uDF6A ' + oreoCount;
 }
 
 function handleCollision() {
     lives--;
     let hearts = '';
     for (let i = 0; i < lives; i++) hearts += '\u2764';
-    document.getElementById('hearts').innerText = hearts;
-
+    document.getElementById('hearts').innerText = hearts;    playSound('aumonkey');
     // MigniÄ™cie autka
     playerGroup.position.y += 0.4;
     setTimeout(() => { playerGroup.position.y = 0; }, 150);
@@ -803,8 +853,10 @@ function handleCollision() {
 
 function gameOver() {
     isGameOver = true;
+    playSound('owno');
     document.getElementById('game-over').style.display = 'block';
     document.getElementById('final-score').innerText = score;
+    document.getElementById('final-oreo').innerText = oreoCount;
 }
 
 window.addEventListener('resize', () => {

@@ -4,6 +4,9 @@ body {
     overflow: hidden;
     font-family: 'Verdana', sans-serif;
     user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    overscroll-behavior: none;
     background-color: #87CEEB;
 }
 
@@ -171,4 +174,138 @@ button:hover {
 
 button:active {
     background: #e6c200;
+}
+
+/* --- OREO COUNTER --- */
+.oreo-value {
+    font-size: 16px !important;
+}
+
+/* --- PAUSE BUTTON --- */
+#pause-btn {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.55);
+    border: 2px solid rgba(255,255,255,0.25);
+    color: white;
+    font-size: 16px;
+    padding: 6px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    pointer-events: auto;
+    backdrop-filter: blur(4px);
+    letter-spacing: 2px;
+    margin-top: 0;
+}
+#pause-btn:hover { background: rgba(0,0,0,0.75); }
+
+/* --- PAUSE OVERLAY --- */
+#pause-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    pointer-events: auto;
+    z-index: 10;
+}
+#pause-box {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.88);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 40px 50px;
+    text-align: center;
+    backdrop-filter: blur(6px);
+}
+#pause-box h2 {
+    color: #ffd700;
+    font-size: 28px;
+    margin: 0 0 20px;
+    letter-spacing: 3px;
+}
+
+/* --- START SCREEN --- */
+#start-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(160deg, #1a6b1a 0%, #2d9e2d 40%, #87CEEB 100%);
+    z-index: 100;
+    pointer-events: auto;
+}
+#start-screen h1 {
+    font-size: clamp(36px, 10vw, 72px);
+    color: #ffd700;
+    text-shadow: 3px 3px 0 #000, 0 0 30px rgba(255,215,0,0.5);
+    text-align: center;
+    margin: 0 0 10px;
+    letter-spacing: 4px;
+    line-height: 1.1;
+}
+.start-sub {
+    color: rgba(255,255,255,0.85);
+    font-size: 16px;
+    margin: 0 0 30px;
+    text-shadow: 1px 1px 2px #000;
+}
+#start-btn {
+    font-size: 22px;
+    padding: 16px 48px;
+    background: #ffd700;
+    border-radius: 12px;
+    letter-spacing: 2px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    margin-top: 0;
+}
+#start-btn:hover { background: #ffe033; transform: scale(1.04); }
+.start-hint {
+    margin-top: 20px;
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    text-shadow: 1px 1px 2px #000;
+}
+
+/* --- MOBILE ARROW BUTTONS --- */
+#mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 16px;
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+.dir-btn {
+    background: rgba(0,0,0,0.55);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: white;
+    font-size: 28px;
+    width: 80px;
+    height: 64px;
+    border-radius: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-top: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+.dir-btn:active { background: rgba(255,215,0,0.4); }
+
+/* Show mobile controls only on touch devices */
+@media (pointer: coarse) {
+    #mobile-controls { display: flex; }
+    #legend-panel { display: none; }
+    #controls-hint { display: none; }
 }
