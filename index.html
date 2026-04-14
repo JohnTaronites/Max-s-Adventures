@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
@@ -103,92 +103,6 @@
             <h1>KONIEC GRY</h1>
             <p>Twój wynik: <span id="final-score">0</span></p>
             <p style="font-size:15px; color:#aaa;">Oreo zjedzone: <span id="final-oreo">0</span></p>
-            <button onclick="location.reload()">Zagraj ponownie</button>
-        </div>
-    </div>
-
-    <div id="canvas-container"></div>
-
-    <script type="module" src="game.js"></script>
-</body>
-</html>
-
-    <div id="ui-container">
-        <div id="stats-panel">
-            <div class="stat-box">
-                <span class="label">LVL</span>
-                <span id="level-val" class="value">1</span>
-            </div>
-            <div class="stat-box" style="margin-left: 10px;">
-                <span class="label">WYNIK</span>
-                <span id="score-val" class="value">0</span>
-            </div>
-        </div>
-
-        <div id="lives-panel">
-            <span class="label">&#x17B;YCIA</span>
-            <div id="hearts">&#x2764;&#x2764;&#x2764;</div>
-        </div>
-
-        <div id="legend-panel">
-            <div class="legend-item danger-item">
-                <span class="legend-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Monkey face -->
-                        <circle cx="12" cy="12" r="9" fill="#8B4513"/>
-                        <!-- Ears -->
-                        <circle cx="3" cy="12" r="3.5" fill="#8B4513"/>
-                        <circle cx="3" cy="12" r="2" fill="#ff9999"/>
-                        <circle cx="21" cy="12" r="3.5" fill="#8B4513"/>
-                        <circle cx="21" cy="12" r="2" fill="#ff9999"/>
-                        <!-- Muzzle -->
-                        <ellipse cx="12" cy="15" rx="5" ry="3.5" fill="#D2934A"/>
-                        <!-- Eyes -->
-                        <circle cx="9" cy="10" r="2" fill="white"/>
-                        <circle cx="15" cy="10" r="2" fill="white"/>
-                        <circle cx="9.5" cy="10.5" r="1.1" fill="#1a0a00"/>
-                        <circle cx="15.5" cy="10.5" r="1.1" fill="#1a0a00"/>
-                        <!-- Nostrils -->
-                        <circle cx="10.5" cy="14.5" r="0.9" fill="#6b3010"/>
-                        <circle cx="13.5" cy="14.5" r="0.9" fill="#6b3010"/>
-                        <!-- Eyebrows -->
-                        <line x1="7.5" y1="8" x2="10.5" y2="7" stroke="#3a1a00" stroke-width="1" stroke-linecap="round"/>
-                        <line x1="16.5" y1="8" x2="13.5" y2="7" stroke="#3a1a00" stroke-width="1" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <span class="legend-text">UNIKAJ</span>
-            </div>
-            <div class="legend-item collect-item">
-                <span class="legend-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Oreo cookie -->
-                        <!-- Bottom biscuit -->
-                        <ellipse cx="12" cy="16" rx="9" ry="3" fill="#1a0f05"/>
-                        <!-- Cream -->
-                        <ellipse cx="12" cy="13" rx="8.5" ry="2.5" fill="#f5f0e8"/>
-                        <!-- Top biscuit -->
-                        <ellipse cx="12" cy="10" rx="9" ry="3" fill="#1a0f05"/>
-                        <!-- Embossed ring -->
-                        <ellipse cx="12" cy="9" rx="5.5" ry="1.8" fill="none" stroke="#3d2010" stroke-width="0.8"/>
-                        <!-- Dots -->
-                        <circle cx="12" cy="7.5" r="0.7" fill="#3d2010"/>
-                        <circle cx="14.5" cy="8.2" r="0.7" fill="#3d2010"/>
-                        <circle cx="9.5" cy="8.2" r="0.7" fill="#3d2010"/>
-                        <circle cx="15.8" cy="10" r="0.7" fill="#3d2010"/>
-                        <circle cx="8.2" cy="10" r="0.7" fill="#3d2010"/>
-                    </svg>
-                </span>
-                <span class="legend-text">ZBIERAJ</span>
-            </div>
-        </div>
-
-        <div id="controls-hint">
-            PC: Strza&#322;ki / A&ndash;D &nbsp;|&nbsp; Mobile: Swipe lewo/prawo
-        </div>
-
-        <div id="game-over">
-            <h1>KONIEC GRY</h1>
-            <p>Twój wynik: <span id="final-score">0</span></p>
             <button onclick="location.reload()">Zagraj ponownie</button>
         </div>
     </div>
