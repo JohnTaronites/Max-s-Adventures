@@ -346,7 +346,8 @@ button:active {
     }
     #lives-panel {
         position: static;
-        text-align: left;
+        text-align: right;
+        margin-left: auto;
     }
     #pause-btn {
         position: static;

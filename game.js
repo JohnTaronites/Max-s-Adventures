@@ -28,26 +28,36 @@ let isPaused   = false;
 let isStarted  = false;
 
 // --- DŹWIĘKI ---
-function makeSound(src) {
-    const a = new Audio(src);
-    a.preload = 'auto';
-    return a;
-}
-const sfx = {
-    mniam:   makeSound('sounds/mniam.mp3'),
-    aumonkey: makeSound('sounds/aumonkey.mp3'),
-    owno:    makeSound('sounds/owno.mp3'),
-    faster:  makeSound('sounds/itsfaster.mp3'),
-};
+// Web Audio API — reliable on mobile (HTML Audio gets suspended)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const sfxBuffers = {};
+(async function loadSounds() {
+    const files = {
+        mniam:    'sounds/mniam.mp3',
+        aumonkey: 'sounds/aumonkey.mp3',
+        owno:     'sounds/owno.mp3',
+        faster:   'sounds/itsfaster.mp3',
+    };
+    for (const [name, url] of Object.entries(files)) {
+        try {
+            const resp = await fetch(url);
+            const arr  = await resp.arrayBuffer();
+            sfxBuffers[name] = await audioCtx.decodeAudioData(arr);
+        } catch(e) { console.warn('Sound load failed:', name); }
+    }
+})();
 function playSound(name) {
-    const s = sfx[name];
-    if (!s) return;
-    s.currentTime = 0;
-    s.play().catch(() => {});
+    if (!sfxBuffers[name]) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const src = audioCtx.createBufferSource();
+    src.buffer = sfxBuffers[name];
+    src.connect(audioCtx.destination);
+    src.start(0);
 }
 
 // Eksponuj funkcje na window dla onclick w HTML
 window.startGame = function() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     isStarted = true;
     document.getElementById('start-screen').style.display = 'none';
 };
@@ -746,6 +756,11 @@ function collectCoin(group) {
 function animate() {
     requestAnimationFrame(animate);
 
+    // Delta time: normalize to 60 fps so game speed is consistent on all devices
+    const now = performance.now();
+    const dt  = lastTime ? Math.min((now - lastTime) / 16.666, 2.5) : 1;
+    lastTime  = now;
+
     if (!isStarted || isPaused || isGameOver) {
         // Still render the scene so it looks alive on start screen
         renderer.render(scene, camera);
@@ -753,9 +768,9 @@ function animate() {
     }
 
     if (!isGameOver) {
-        if (laneCooldown > 0) laneCooldown--;
+        if (laneCooldown > 0) laneCooldown -= dt;
         // Płynne lerp do środka aktualnego pasa
-        playerGroup.position.x += (targetX - playerGroup.position.x) * 0.16;
+        playerGroup.position.x += (targetX - playerGroup.position.x) * Math.min(0.16 * dt, 1);
         playerGroup.rotation.z = (playerGroup.position.x - targetX) * 0.08;
         // rotation.x intentionally removed — no idle rocking, lean only on turns
     }
@@ -763,12 +778,12 @@ function animate() {
     // Scrollowanie linii jezdni — tylko gdy gra trwa
     if (!isGameOver) {
         for (const dash of dashLines) {
-            dash.position.z += gameSpeed;
+            dash.position.z += gameSpeed * dt;
             if (dash.position.z > 10) dash.position.z -= DASH_COUNT * DASH_SPACING;
         }
         // Scroll scenery decorations
         for (const item of sceneryItems) {
-            item.group.position.z += gameSpeed;
+            item.group.position.z += gameSpeed * dt;
             if (item.group.position.z > PLAYER_Z + 20) {
                 let minZ = Infinity;
                 for (const other of sceneryItems) {
@@ -785,19 +800,19 @@ function animate() {
 
     if (isGameOver) return;
     // --- Spawning oparty o dystans ---
-    obstacleCountdown -= gameSpeed;
+    obstacleCountdown -= gameSpeed * dt;
     if (obstacleCountdown <= 0) {
         spawnWave();
         // losowy odstęp 26-32 jednostki między falami
         obstacleCountdown = 26 + Math.random() * 6;
     }
-    collectibleCountdown -= gameSpeed;
+    collectibleCountdown -= gameSpeed * dt;
     if (collectibleCountdown <= 0) {
         spawnCollectible();
         collectibleCountdown = 22 + Math.random() * 8;
     }
     // Banana: rare spawn, distance-based, max 2 per level
-    bananaCountdown -= gameSpeed;
+    bananaCountdown -= gameSpeed * dt;
     if (bananaCountdown <= 0) {
         spawnBanana();
         // Next banana: long random gap (roughly half a level apart)
@@ -806,7 +821,7 @@ function animate() {
     // --- Obsługa przeszkód (małpki) ---
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obj = obstacles[i];
-        obj.position.z += gameSpeed;
+        obj.position.z += gameSpeed * dt;
         obj.position.y = 0.55 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.2; // bob góra-dół
 
         // Kolizja: sprawdzamy XZ i zakres Z zbliÅ¼ony do gracza
@@ -832,10 +847,10 @@ function animate() {
     // --- ObsÅ‚uga znajdziek (monety) ---
     for (let i = collectibles.length - 1; i >= 0; i--) {
         const obj = collectibles[i];
-        if (obj.userData.dying) continue; // juÅ¼ w animacji
+        if (obj.userData.dying) { scene.remove(obj); collectibles.splice(i, 1); continue; } // juÅ¼ w animacji
 
-        obj.position.z += gameSpeed;
-        obj.rotation.y += 0.04;   // Oreo obraca się płasko
+        obj.position.z += gameSpeed * dt;
+        obj.rotation.y += 0.04 * dt;   // Oreo obraca się płasko
         obj.position.y = 1.6 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.25;
 
         if (
@@ -859,8 +874,8 @@ function animate() {
     // --- Obsługa bananów ---
     for (let i = bananas.length - 1; i >= 0; i--) {
         const obj = bananas[i];
-        obj.position.z += gameSpeed;
-        obj.rotation.y += 0.03;
+        obj.position.z += gameSpeed * dt;
+        obj.rotation.y += 0.03 * dt;
         obj.position.y = 0.95 + Math.sin(Date.now() * 0.003 + i * 2.1) * 0.12;
 
         if (
@@ -889,17 +904,17 @@ function animate() {
     // --- Animacje obiektÃ³w ginÄ…cych ---
     for (let i = dyingObjects.length - 1; i >= 0; i--) {
         const d = dyingObjects[i];
-        d.age++;
-        d.group.position.x += d.vx;
-        d.group.position.y += d.vy;
-        d.group.position.z += d.vz;
-        d.group.rotation.x += d.rotX;
-        d.group.rotation.z += d.rotZ;
+        d.age += dt;
+        d.group.position.x += d.vx * dt;
+        d.group.position.y += d.vy * dt;
+        d.group.position.z += d.vz * dt;
+        d.group.rotation.x += d.rotX * dt;
+        d.group.rotation.z += d.rotZ * dt;
 
         if (d.type === 'barrel') {
-            d.vy -= 0.012; // grawitacja
+            d.vy -= 0.012 * dt; // grawitacja
             // SpÅ‚aszcz beczkÄ™
-            if (d.group.scale.y > 0.15) d.group.scale.y -= 0.04;
+            if (d.group.scale.y > 0.15) d.group.scale.y -= 0.04 * dt;
         }
 
         if (d.type === 'coin') {
