@@ -21,7 +21,7 @@ const COLLISION_XZ_DIST = 1.3;
 let gameSpeed = SPEED_BASE;
 let score     = 0;
 let level     = 1;
-let lives     = 3;
+let lives     = 5;
 let oreoCount = 0;
 let isGameOver = false;
 let isPaused   = false;
@@ -559,9 +559,51 @@ function makeCoinGroup() {
     return g;
 }
 
-// --- SPAWNING (FALE - MAKS 2 PASY ZABLOKOWANE) ---
+function makeBananaGroup() {
+    const g = new THREE.Group();
+    const yellowMat = new THREE.MeshStandardMaterial({ color: 0xFFE135, roughness: 0.6 });
+    const tipMat    = new THREE.MeshStandardMaterial({ color: 0xC8A000, roughness: 0.7 });
+    const stemMat   = new THREE.MeshStandardMaterial({ color: 0x5a3a00, roughness: 0.8 });
+
+    // Main banana body — curved using several rotated cylinders
+    const segments = 7;
+    for (let s = 0; s < segments; s++) {
+        const t = s / (segments - 1);  // 0..1
+        const r = 0.13 - t * 0.04;     // taper toward tip
+        const seg = new THREE.Mesh(
+            new THREE.CylinderGeometry(r, r + 0.01, 0.22, 8),
+            s === segments - 1 ? tipMat : yellowMat
+        );
+        // Arc: rotate and offset to simulate banana curve
+        const angle = t * 0.75;   // total bend ~0.75 rad
+        seg.position.set(
+            Math.sin(angle) * 0.55,
+            0.6 + t * 0.05,
+            0
+        );
+        seg.rotation.z = -angle;
+        g.add(seg);
+    }
+
+    // Stem nub at top
+    const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.08, 0.18, 6),
+        stemMat
+    );
+    stem.position.set(0, 0.62, 0);
+    stem.rotation.z = 0.3;
+    g.add(stem);
+
+    return g;
+}
 const obstacles   = [];
 const collectibles = [];
+const bananas     = [];
+
+// Banana: spawns ~2x per level. After each level-up we reset the counter.
+const MAX_LIVES = 5;
+let bananasThisLevel = 0;
+let bananaCountdown  = SCORE_PER_LEVEL * 0.4; // first banana at ~40% of level score distance
 
 function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -600,6 +642,24 @@ function spawnCollectible() {
     // brak rotation.x — Oreo leży płasko, widoczne z góry
     scene.add(g);
     collectibles.push(g);
+}
+
+function spawnBanana() {
+    if (isGameOver || bananasThisLevel >= 2) return;
+    const spawnZ = -(PLAYER_Z + 180 * gameSpeed);
+    const usedLanes = new Set([
+        ...obstacles.filter(o => Math.abs(o.position.z - spawnZ) < 12).map(o => Math.round(o.position.x / LANE_WIDTH)),
+        ...collectibles.filter(o => Math.abs(o.position.z - spawnZ) < 12).map(o => Math.round(o.position.x / LANE_WIDTH)),
+    ]);
+    const freeLanes = [-1, 0, 1].filter(l => !usedLanes.has(l));
+    const pool = freeLanes.length > 0 ? freeLanes : [-1, 0, 1];
+    const lane = pool[Math.floor(Math.random() * pool.length)];
+    const g = makeBananaGroup();
+    g.position.set(lane * LANE_WIDTH, 1.4, spawnZ);
+    g.userData.isBanana = true;
+    scene.add(g);
+    bananas.push(g);
+    bananasThisLevel++;
 }
 
 // Spawning oparte o dystans (nie czas) — gwarantuje stały odstęp wzrokowy
@@ -734,6 +794,13 @@ function animate() {
         spawnCollectible();
         collectibleCountdown = 22 + Math.random() * 8;
     }
+    // Banana: rare spawn, distance-based, max 2 per level
+    bananaCountdown -= gameSpeed;
+    if (bananaCountdown <= 0) {
+        spawnBanana();
+        // Next banana: long random gap (roughly half a level apart)
+        bananaCountdown = (SCORE_PER_LEVEL / 2) * (0.8 + Math.random() * 0.4);
+    }
     // --- Obsługa przeszkód (małpki) ---
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obj = obstacles[i];
@@ -787,6 +854,36 @@ function animate() {
         }
     }
 
+    // --- Obsługa bananów ---
+    for (let i = bananas.length - 1; i >= 0; i--) {
+        const obj = bananas[i];
+        obj.position.z += gameSpeed;
+        obj.rotation.y += 0.03;
+        obj.position.y = 1.4 + Math.sin(Date.now() * 0.003 + i * 2.1) * 0.22;
+
+        if (
+            obj.position.z > COLLISION_Z_MIN &&
+            obj.position.z < COLLISION_Z_MAX &&
+            collidesXZ(obj.position)
+        ) {
+            bananas.splice(i, 1);
+            collectCoin(obj);
+            if (lives < MAX_LIVES) {
+                lives++;
+                let hearts = '';
+                for (let h = 0; h < lives; h++) hearts += '\u2764';
+                document.getElementById('hearts').innerText = hearts;
+            }
+            updateScore(30);
+            continue;
+        }
+
+        if (obj.position.z > PLAYER_Z + 8) {
+            scene.remove(obj);
+            bananas.splice(i, 1);
+        }
+    }
+
     // --- Animacje obiektÃ³w ginÄ…cych ---
     for (let i = dyingObjects.length - 1; i >= 0; i--) {
         const d = dyingObjects[i];
@@ -829,6 +926,8 @@ function updateScore(val) {
         gameSpeed = SPEED_BASE + (level - 1) * SPEED_PER_LEVEL;
         document.getElementById('level-val').innerText = level;
         playSound('faster');
+        bananasThisLevel = 0;  // reset banana quota for new level
+        bananaCountdown = (SCORE_PER_LEVEL * 0.4);
     }
 }
 
@@ -841,12 +940,14 @@ function handleCollision() {
     lives--;
     let hearts = '';
     for (let i = 0; i < lives; i++) hearts += '\u2764';
-    document.getElementById('hearts').innerText = hearts;    playSound('aumonkey');
-    // MigniÄ™cie autka
-    playerGroup.position.y += 0.4;
-    setTimeout(() => { playerGroup.position.y = 0; }, 150);
-
-    if (lives <= 0) gameOver();
+    document.getElementById('hearts').innerText = hearts;
+    if (lives <= 0) {
+        gameOver(); // owno plays inside gameOver()
+    } else {
+        playSound('aumonkey');
+        playerGroup.position.y += 0.4;
+        setTimeout(() => { playerGroup.position.y = 0; }, 150);
+    }
 }
 
 function gameOver() {
