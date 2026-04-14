@@ -13,6 +13,7 @@ body {
 #canvas-container {
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* mobile: eliminates gap caused by browser UI bars */
     display: block;
 }
 
@@ -25,12 +26,25 @@ body {
     pointer-events: none;
 }
 
-#stats-panel {
+#top-ui {
     position: absolute;
-    top: 20px;
-    left: 20px;
+    top: 12px;
+    left: 12px;
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+}
+
+#stats-panel {
+    display: flex;
+    gap: 8px;
+}
+
+#lives-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .stat-box {
@@ -61,10 +75,7 @@ body {
 }
 
 #lives-panel {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    text-align: right;
+    text-align: left;
     color: white;
     text-shadow: 2px 2px 0 #000;
 }
@@ -189,21 +200,19 @@ button:active {
 
 /* --- PAUSE BUTTON --- */
 #pause-btn {
-    position: absolute;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: static;
     background: rgba(0,0,0,0.55);
     border: 2px solid rgba(255,255,255,0.25);
     color: white;
     font-size: 16px;
-    padding: 6px 18px;
+    padding: 6px 14px;
     border-radius: 8px;
     cursor: pointer;
     pointer-events: auto;
     backdrop-filter: blur(4px);
     letter-spacing: 2px;
-    margin-top: 0;
+    margin: 0;
+    flex-shrink: 0;
 }
 #pause-btn:hover { background: rgba(0,0,0,0.75); }
 

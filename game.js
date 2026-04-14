@@ -960,11 +960,18 @@ function gameOver() {
     document.getElementById('final-oreo').innerText = oreoCount;
 }
 
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+function onResize() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const container = document.getElementById('canvas-container');
+    container.style.width  = w + 'px';
+    container.style.height = h + 'px';
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+    renderer.setSize(w, h);
+}
+onResize();
+window.addEventListener('resize', onResize);
 
 window.onerror = function (msg) {
     console.error('Game error:', msg);

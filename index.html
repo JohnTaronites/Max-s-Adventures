@@ -17,28 +17,31 @@
     </div>
 
     <div id="ui-container">
-        <div id="stats-panel">
-            <div class="stat-box">
-                <span class="label">LVL</span>
-                <span id="level-val" class="value">1</span>
+        <!-- TOP UI: stats row + (pause + lives) row -->
+        <div id="top-ui">
+            <div id="stats-panel">
+                <div class="stat-box">
+                    <span class="label">LVL</span>
+                    <span id="level-val" class="value">1</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">WYNIK</span>
+                    <span id="score-val" class="value">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="label">OREO</span>
+                    <span id="oreo-val" class="value oreo-value">&#x1F36A; 0</span>
+                </div>
             </div>
-            <div class="stat-box" style="margin-left: 10px;">
-                <span class="label">WYNIK</span>
-                <span id="score-val" class="value">0</span>
-            </div>
-            <div class="stat-box" style="margin-left: 10px;">
-                <span class="label">OREO</span>
-                <span id="oreo-val" class="value oreo-value">&#x1F36A; 0</span>
+            <div id="lives-row">
+                <!-- PAUSE BUTTON -->
+                <button id="pause-btn" onclick="togglePause()">&#9646;&#9646;</button>
+                <div id="lives-panel">
+                    <span class="label">&#x17B;YCIA</span>
+                    <div id="hearts">&#x2764;&#x2764;&#x2764;&#x2764;&#x2764;</div>
+                </div>
             </div>
         </div>
-
-        <div id="lives-panel">
-            <span class="label">&#x17B;YCIA</span>
-            <div id="hearts">&#x2764;&#x2764;&#x2764;&#x2764;&#x2764;</div>
-        </div>
-
-        <!-- PAUSE BUTTON -->
-        <button id="pause-btn" onclick="togglePause()">&#9646;&#9646;</button>
 
         <!-- LEGENDA (desktop) / PRZYCISKI (mobile) -->
         <div id="legend-panel">
