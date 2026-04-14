@@ -38,7 +38,6 @@ const sfx = {
     aumonkey: makeSound('sounds/aumonkey.mp3'),
     owno:    makeSound('sounds/owno.mp3'),
     faster:  makeSound('sounds/itsfaster.mp3'),
-    monkey:  makeSound('sounds/monkey-on-theroad.mp3'),
 };
 function playSound(name) {
     const s = sfx[name];
@@ -583,7 +582,6 @@ function spawnWave() {
         scene.add(g);
         obstacles.push(g);
     }
-    playSound('monkey'); // raz na falę, niezależnie od liczby małpek
 }
 
 function spawnCollectible() {
