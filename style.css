@@ -26,25 +26,23 @@ body {
     pointer-events: none;
 }
 
+/* #top-ui is a wrapper — on desktop children are positioned absolutely;
+   on mobile it becomes a flex column (see pointer:coarse below) */
 #top-ui {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    position: static;
     pointer-events: none;
 }
 
 #stats-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     display: flex;
     gap: 8px;
 }
 
 #lives-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: contents; /* transparent on desktop — children escape to #ui-container */
 }
 
 .stat-box {
@@ -75,7 +73,10 @@ body {
 }
 
 #lives-panel {
-    text-align: left;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: right;
     color: white;
     text-shadow: 2px 2px 0 #000;
 }
@@ -200,19 +201,21 @@ button:active {
 
 /* --- PAUSE BUTTON --- */
 #pause-btn {
-    position: static;
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background: rgba(0,0,0,0.55);
     border: 2px solid rgba(255,255,255,0.25);
     color: white;
     font-size: 16px;
-    padding: 6px 14px;
+    padding: 6px 18px;
     border-radius: 8px;
     cursor: pointer;
     pointer-events: auto;
     backdrop-filter: blur(4px);
     letter-spacing: 2px;
     margin: 0;
-    flex-shrink: 0;
 }
 #pause-btn:hover { background: rgba(0,0,0,0.75); }
 
@@ -323,4 +326,32 @@ button:active {
     #mobile-controls { display: flex; }
     #legend-panel { display: none; }
     #controls-hint { display: none; }
+
+    /* Mobile top UI: column layout (stats row + pause-left + lives) */
+    #top-ui {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    #stats-panel {
+        position: static;
+    }
+    #lives-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #lives-panel {
+        position: static;
+        text-align: left;
+    }
+    #pause-btn {
+        position: static;
+        transform: none;
+        padding: 6px 14px;
+        flex-shrink: 0;
+    }
 }
