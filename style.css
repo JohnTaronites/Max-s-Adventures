@@ -356,4 +356,66 @@ button:active {
         padding: 6px 14px;
         flex-shrink: 0;
     }
+}/* Turbo edition */
+:root { color-scheme: dark; --mint: #b6ff69; }
+body { font-family: 'Segoe UI', sans-serif; background: #101f25; }
+button { touch-action: manipulation; }
+button:focus-visible { outline: 3px solid white; outline-offset: 5px; }
+button:disabled { opacity: .5; cursor: wait; }
+#start-screen { box-sizing: border-box; padding: 24px; background: radial-gradient(ellipse at 50% 95%, #315d5366, transparent 65%), linear-gradient(120deg,#0c1d29ed,#123138df); overflow-y: auto; }
+.eyebrow { color: #b6ff69; font-size: 11px; letter-spacing: 4px; font-weight: 800; margin-bottom: 16px; }
+#start-screen h1 { font-size: clamp(34px,6vw,74px); color: #fff; letter-spacing: -3px; line-height: .95; text-shadow: none; font-style: italic; }
+#start-screen h1 em { color: #b6ff69; }
+.start-sub { margin: 18px 0 24px; font-size: 15px; color: #c2d7d6; text-shadow: none; }
+#garage { display: flex; gap: 12px; width: min(660px,100%); margin-bottom: 24px; }
+.vehicle-card { flex: 1; min-width: 0; margin: 0; padding: 22px 10px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #203b46; border: 1px solid #547077; color: white; border-radius: 16px; letter-spacing: 1px; }
+.vehicle-card:hover { background: #2d4d55; }
+.vehicle-card.selected { background: #34543e; border-color: #b6ff69; box-shadow: inset 0 0 0 1px #b6ff69,0 12px 35px #0003; }
+.vehicle-card strong { font-size: 17px; }
+.vehicle-card small { font-size: 12px; font-weight: 400; color: #d0dedc; letter-spacing: 0; }
+.vehicle-card > span:last-child { font-size: 10px; color: #b6ff69; letter-spacing: 0; margin-top: 4px; }
+.vehicle-art { position: relative; display: block; width: 90px; height: 42px; margin: 12px 0 18px; background: #ff6459; border-radius: 8px 18px 5px 5px; box-shadow: inset 0 -10px #0003; }
+.vehicle-art:before { content: ''; position: absolute; width: 48px; height: 25px; left: 20px; top: -18px; border-radius: 8px 12px 0 0; background: linear-gradient(90deg,#345a6b 42%,#ff6459 43% 54%,#345a6b 55%); border: 4px solid #ff6459; }
+.vehicle-art:after { content: ''; position: absolute; width: 25px; height: 25px; border-radius: 50%; background: #a1b7bb; border: 7px solid #10212b; bottom: -16px; left: 0; box-shadow: 56px 0 0 -7px #a1b7bb,56px 0 0 0 #10212b; }
+.vehicle-art.rally { background: #4dbdea; height: 27px; margin-top: 27px; }
+.vehicle-art.rally:before { border-color: #4dbdea; background: #345a6b; }
+.vehicle-art.buggy { background: #f8c657; height: 30px; margin-top: 24px; }
+.vehicle-art.buggy:before { border-color: #f8c657; background: transparent; }
+#start-btn { background: #b6ff69; color: #172c23; font-size: 16px; padding: 17px 60px; }
+.start-hint { text-align: center; line-height: 1.9; color: #c2d7d6; text-shadow: none; margin-bottom: 8px; }
+.garage-rules { font-size: 11px; color: #9cb6b6; text-align: center; line-height: 1.7; margin: 0; }
+.stat-box,#pause-btn { background: #122b39da; border: 1px solid #9ebaba55; border-radius: 12px; }
+.value { color: #b6ff69; }
+#turbo-btn { position: absolute; right: 24px; bottom: 30px; width: 190px; padding: 16px; margin: 0; pointer-events: auto; background: #122b39ed; border: 1px solid #b6ff69; color: #b6ff69; font-size: 12px; }
+.turbo-track { display: block; background: #ffffff20; height: 5px; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+#turbo-fill { display: block; width: 100%; height: 100%; background: #b6ff69; transform-origin: left; }
+body.boosting #turbo-btn { background: #b6ff69; color: #173024; box-shadow: 0 0 32px #b6ff6960; }
+body.boosting #turbo-fill { background: #173024; }
+#ui-container { z-index: 2; visibility: hidden; }
+body.playing #ui-container { visibility: visible; }
+#game-over { width: min(330px,80vw); box-sizing: border-box; padding: 28px; }
+@media (max-width: 600px) {
+ #start-screen { padding: 18px 12px; }
+ .eyebrow { font-size: 9px; letter-spacing: 2px; }
+ #garage { gap: 7px; margin-bottom: 20px; }
+ .vehicle-card { padding: 18px 3px 12px; }
+ .vehicle-card strong { font-size: 13px; }
+ .vehicle-card small { font-size: 10px; }
+ .vehicle-card > span:last-child { font-size: 8px; }
+ .vehicle-art { transform: scale(.78); }
+ #turbo-btn { right: 50%; transform: translateX(50%); bottom: 22px; width: 145px; padding: 13px 8px; }
+ #legend-panel,#controls-hint { display: none; }
+ #mobile-controls { display: flex; }
+ .stat-box { min-width: 50px; padding: 6px 8px; }
+ #hearts { font-size: 19px; letter-spacing: 1px; }
 }
+@media (max-height: 650px) { #start-screen { justify-content: flex-start; } #start-screen h1 { font-size: 38px; } .start-sub { margin: 12px 0 16px; } .eyebrow { margin-bottom: 10px; } }
+@media (pointer: coarse) { #turbo-btn { right: 50%; transform: translateX(50%); bottom: 22px; width: 145px; } }
+@media (max-width: 600px) {
+ #top-ui { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; }
+ #stats-panel { position: static; }
+ #lives-row { display: flex; align-items: center; gap: 8px; }
+ #lives-panel { position: static; margin-left: auto; }
+ #pause-btn { position: static; transform: none; padding: 6px 14px; }
+}
+.dir-btn:hover { background: #31534a; }

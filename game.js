@@ -27,6 +27,58 @@ let isGameOver = false;
 let isPaused   = false;
 let isStarted  = false;
 let lastTime   = 0;
+const vehicles = {
+    monster: { turn: 0.16, duration: 4, color: 0xf05245 },
+    rally: { turn: 0.23, duration: 3, color: 0x38bfea },
+    buggy: { turn: 0.19, duration: 5, color: 0xffc447 }
+};
+let selectedVehicle = 'monster';
+let turbo = 100, turboRemaining = 0, simulationTime = 0;
+const turboButton = document.getElementById('turbo-btn');
+const turboFill = document.getElementById('turbo-fill');
+const turboLabel = document.getElementById('turbo-label');
+function activateTurbo() {
+    if (!isStarted || isPaused || isGameOver || turbo < 100 || turboRemaining > 0) return;
+    turboRemaining = vehicles[selectedVehicle].duration;
+}
+function updateTurbo(dt) {
+    const seconds = dt / 60;
+    if (turboRemaining > 0) {
+        turboRemaining = Math.max(0, turboRemaining - seconds);
+        turbo = 100 * turboRemaining / vehicles[selectedVehicle].duration;
+    } else turbo = Math.min(100, turbo + seconds * 12.5);
+    const active = turboRemaining > 0;
+    gameSpeed = Math.min(0.65, SPEED_BASE + (level - 1) * SPEED_PER_LEVEL) * (active ? 1.75 : 1);
+    turboFill.style.transform = 'scaleX(' + turbo / 100 + ')';
+    turboLabel.textContent = active ? 'TURBO! · OREO ×2' : turbo >= 100 ? 'TURBO · SPACJA' : 'ŁADOWANIE · ' + Math.floor(turbo) + '%';
+    turboButton.disabled = !active && turbo < 100;
+    document.body.classList.toggle('boosting', active);
+    boostFlames.visible = active;
+    boostFlames.scale.z = 0.85 + Math.sin(simulationTime * 35) * 0.15;
+    const baseFov = window.innerHeight > window.innerWidth ? 80 : 60;
+    camera.fov += (baseFov + (active ? 8 : 0) - camera.fov) * (1 - Math.exp(-dt * .08));
+    camera.updateProjectionMatrix();
+}
+const objectPools = { barrel: [], coin: [], banana: [] };
+function acquireObject(kind, build) {
+    const group = objectPools[kind].pop() || build();
+    group.userData = { poolType: kind };
+    group.rotation.set(0,0,0); group.scale.set(1,1,1);
+    group.traverse(mesh => { if (mesh.material?.transparent) mesh.material.opacity = 1; });
+    return group;
+}
+function releaseObject(group) {
+    scene.remove(group);
+    const pool = objectPools[group.userData.poolType];
+    if (pool && pool.length < 12) { pool.push(group); return; }
+    const geometries = new Set(), materials = new Set();
+    group.traverse(mesh => {
+        if (mesh.geometry) geometries.add(mesh.geometry);
+        if (mesh.material) (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(m => materials.add(m));
+    });
+    geometries.forEach(g => g.dispose());
+    materials.forEach(m => m.dispose());
+}
 
 // --- DźWIĘKI ---
 // Web Audio API — reliable on mobile (HTML Audio gets suspended)
@@ -54,6 +106,7 @@ let musicGain   = null;
         const resp = await fetch('sounds/music.m4a');
         const arr  = await resp.arrayBuffer();
         musicBuffer = await audioCtx.decodeAudioData(arr);
+        if (isStarted && !isGameOver) startMusic();
     } catch(e) { console.warn('Music load failed:', e); }
 })();
 function playSound(name) {
@@ -85,7 +138,10 @@ function stopMusic() {
 // Eksponuj funkcje na window dla onclick w HTML
 window.startGame = function() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (isStarted) return;
     isStarted = true;
+    document.body.classList.add('playing');
+    lastTime = performance.now();
     document.getElementById('start-screen').style.display = 'none';
     startMusic();
 };
@@ -107,8 +163,16 @@ const dyingObjects = []; // { group, age, vx, vy, vz, type: 'barrel'|'coin' }
 
 // --- INICJALIZACJA SCENY ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.Fog(0x87CEEB, 40, 90);
+scene.background = new THREE.Color(0xa9d9dc);
+scene.fog = new THREE.Fog(0xa9d9dc, 40, 90);
+const skyCanvas = document.createElement('canvas');
+skyCanvas.width = 2; skyCanvas.height = 256;
+const skyContext = skyCanvas.getContext('2d');
+const skyGradient = skyContext.createLinearGradient(0,0,0,256);
+skyGradient.addColorStop(0, '#529fbe'); skyGradient.addColorStop(.65, '#a9d9dc'); skyGradient.addColorStop(1, '#e5eed5');
+skyContext.fillStyle = skyGradient; skyContext.fillRect(0,0,2,256);
+const skyTexture = new THREE.CanvasTexture(skyCanvas); skyTexture.colorSpace = THREE.SRGBColorSpace;
+scene.background = skyTexture;
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(0, 6.5, 14);
@@ -116,8 +180,12 @@ camera.lookAt(0, 0.5, -5);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
 // --- OÅšWIETLENIE ---
@@ -127,23 +195,37 @@ scene.add(ambientLight);
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
 dirLight.position.set(5, 10, 7);
 dirLight.castShadow = true;
+dirLight.color.setHex(0xffebce);
+dirLight.intensity = 2.2;
+dirLight.shadow.mapSize.set(1024, 1024);
+Object.assign(dirLight.shadow.camera, { left: -14, right: 14, top: 18, bottom: -18, near: .5, far: 60 });
+dirLight.shadow.bias = -0.001;
 scene.add(dirLight);
+// Distant low-poly hills give the road a layered horizon.
+const hillGeometry = new THREE.ConeGeometry(1, 1, 7);
+const hillMaterial = new THREE.MeshStandardMaterial({ color: 0x629b91, flatShading: true });
+for (let i = 0; i < 12; i++) {
+    const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+    hill.position.set((i - 5.5) * 12, 3, -68 - (i % 3) * 5);
+    hill.scale.set(11 + i % 4, 12 + i % 3 * 5, 13);
+    scene.add(hill);
+}
 
 // --- TRAWA (PODÅOÅ»E) ---
 const grassGeo = new THREE.PlaneGeometry(100, ROAD_LENGTH);
-const grassMat = new THREE.MeshStandardMaterial({ color: 0x4a9e4a });
+const grassMat = new THREE.MeshStandardMaterial({ color: 0x70a868 });
 const grass = new THREE.Mesh(grassGeo, grassMat);
 grass.rotation.x = -Math.PI / 2;
-grass.position.set(0, 0, -ROAD_LENGTH / 2 + 10);
+grass.position.set(0, 0, -ROAD_LENGTH / 2 + 80);
 grass.receiveShadow = true;
 scene.add(grass);
 
 // --- DROGA (ASFALT) ---
 const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
-const roadMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+const roadMat = new THREE.MeshStandardMaterial({ color: 0x293e48 });
 const road = new THREE.Mesh(roadGeo, roadMat);
 road.rotation.x = -Math.PI / 2;
-road.position.set(0, 0.01, -ROAD_LENGTH / 2 + 10);
+road.position.set(0, 0.01, -ROAD_LENGTH / 2 + 80);
 road.receiveShadow = true;
 scene.add(road);
 
@@ -151,10 +233,10 @@ scene.add(road);
 const curbGeo = new THREE.BoxGeometry(0.35, 0.15, ROAD_LENGTH);
 const curbMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
 const curbL = new THREE.Mesh(curbGeo, curbMat);
-curbL.position.set(-(ROAD_WIDTH / 2 + 0.175), 0.075, -ROAD_LENGTH / 2 + 10);
+curbL.position.set(-(ROAD_WIDTH / 2 + 0.175), 0.075, -ROAD_LENGTH / 2 + 80);
 scene.add(curbL);
 const curbR = new THREE.Mesh(curbGeo, curbMat);
-curbR.position.set(ROAD_WIDTH / 2 + 0.175, 0.075, -ROAD_LENGTH / 2 + 10);
+curbR.position.set(ROAD_WIDTH / 2 + 0.175, 0.075, -ROAD_LENGTH / 2 + 80);
 scene.add(curbR);
 
 // --- LINIE JEZDNI (SCROLLOWANE) ---
@@ -163,7 +245,7 @@ const dashMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
 const dashLines = [];
 for (let i = 0; i < DASH_COUNT; i++) {
     const zPos = -i * DASH_SPACING;
-    [-LANE_WIDTH, LANE_WIDTH].forEach(xPos => {
+    [-LANE_WIDTH / 2, LANE_WIDTH / 2].forEach(xPos => {
         const dash = new THREE.Mesh(dashGeo, dashMat);
         dash.rotation.x = -Math.PI / 2;
         dash.position.set(xPos, 0.02, zPos);
@@ -174,7 +256,7 @@ for (let i = 0; i < DASH_COUNT; i++) {
 
 // --- OTOCZENIE DROGI (SCROLLOWANE DEKORACJE) ---
 const SCENERY_SPACING = 20;
-const SCENERY_PER_SIDE = 14;
+const SCENERY_PER_SIDE = 7;
 const sceneryItems = [];
 
 function makeSceneryGroup(type) {
@@ -513,8 +595,90 @@ addMonsterWheel( 1, -1.1); addMonsterWheel(-1, -1.1);
 
 playerGroup.position.set(0, 0, PLAYER_Z);
 scene.add(playerGroup);
+const monsterParts = [...playerGroup.children];
+const alternativeVehicles = {};
+function makeSportVehicle(kind, color) {
+    const model = new THREE.Group();
+    const paint = new THREE.MeshStandardMaterial({ color, metalness: .3, roughness: .32 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x16303b, roughness: .35 });
+    const tire = new THREE.MeshStandardMaterial({ color: 0x142028 });
+    function box(w,h,d,x,y,z,mat) {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+        mesh.position.set(x,y,z); mesh.castShadow = true; model.add(mesh); return mesh;
+    }
+    box(1.65,.45,2.9,0,.68,0,paint);
+    if (kind === 'rally') {
+        box(1.3,.5,1.35,0,1.14,.1,dark);
+        box(1.42,.12,1.5,0,1.44,.1,paint);
+        box(1.9,.12,.45,0,1.1,1.3,paint);
+        box(.24,.02,2.9,0,.915,0,dark);
+    } else {
+        box(1.1,.35,.6,0,1,.3,dark);
+        for (const x of [-.65,.65]) {
+            box(.09,.85,.09,x,1.25,.7,paint);
+            box(.09,.85,.09,x,1.25,-.65,paint);
+            box(.09,.09,1.45,x,1.68,0,paint);
+        }
+        box(1.4,.09,.09,0,1.68,.7,paint);
+        box(1.4,.09,.09,0,1.68,-.65,paint);
+    }
+    for (const x of [-.95,.95]) for (const z of [-.95,.95]) {
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.43,.43,.36,12),tire);
+        wheel.rotation.z = Math.PI / 2; wheel.position.set(x,.43,z); wheel.castShadow = true; model.add(wheel);
+        box(.38,.08,.13,x,.44,z,paint);
+    }
+    const lamp = new THREE.MeshStandardMaterial({ color: 0xff4f4f, emissive: 0xff2020, emissiveIntensity: 2 });
+    for (const x of [-.6,.6]) box(.3,.12,.06,x,.78,1.47,lamp);
+    return model;
+}
+for (const kind of ['rally','buggy']) {
+    const model = makeSportVehicle(kind, vehicles[kind].color);
+    model.visible = false; playerGroup.add(model); alternativeVehicles[kind] = model;
+}
+const boostFlames = new THREE.Group();
+const flameMat = new THREE.MeshBasicMaterial({ color: 0x69eeff, transparent: true, opacity: .8 });
+for (const x of [-.55,.55]) {
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(.2,1.8,7),flameMat);
+    flame.rotation.x = Math.PI / 2; flame.position.set(x,.7,2.1); boostFlames.add(flame);
+}
+boostFlames.visible = false; playerGroup.add(boostFlames);
+document.querySelectorAll('[data-vehicle]').forEach(button => button.addEventListener('click', () => {
+    if (isStarted) return;
+    selectedVehicle = button.dataset.vehicle;
+    monsterParts.forEach(part => part.visible = selectedVehicle === 'monster');
+    Object.entries(alternativeVehicles).forEach(([kind, model]) => model.visible = kind === selectedVehicle);
+    document.querySelectorAll('[data-vehicle]').forEach(card => {
+        const active = card.dataset.vehicle === selectedVehicle;
+        card.classList.toggle('selected', active); card.setAttribute('aria-pressed', String(active));
+    });
+}));
+turboButton.addEventListener('click', activateTurbo);
+for (const [id, direction] of [['btn-left',-1],['btn-right',1]]) {
+    document.getElementById(id).addEventListener('pointerdown', event => { event.preventDefault(); changeLane(direction); });
+}
+window.returnToGarage = function() {
+    [...obstacles, ...collectibles, ...bananas, ...dyingObjects.map(d => d.group)].forEach(releaseObject);
+    obstacles.length = collectibles.length = bananas.length = dyingObjects.length = 0;
+    score = oreoCount = 0; level = 1; lives = 5;
+    isStarted = isPaused = isGameOver = false;
+    gameSpeed = SPEED_BASE; turbo = 100; turboRemaining = 0;
+    currentLane = targetX = laneCooldown = 0;
+    obstacleCountdown = 28; collectibleCountdown = 28;
+    bananasThisLevel = 0; bananaCountdown = SCORE_PER_LEVEL * .4;
+    playerGroup.position.set(0,0,PLAYER_Z); playerGroup.rotation.set(0,0,0);
+    boostFlames.visible = false;
+    document.body.classList.remove('playing','boosting');
+    document.getElementById('game-over').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+    document.getElementById('score-val').textContent = '0';
+    document.getElementById('level-val').textContent = '1';
+    document.getElementById('oreo-val').textContent = '🍪 0';
+    document.getElementById('hearts').textContent = '❤❤❤❤❤';
+    onResize();
+};
 // --- FABRYKI MESH ---
-function makeBarrelGroup() {
+function makeBarrelGroup() { return acquireObject('barrel', buildBarrelGroup); }
+function buildBarrelGroup() {
     // Monkey face obstacle
     const g = new THREE.Group();
     const brownMat  = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
@@ -575,7 +739,8 @@ function makeBarrelGroup() {
     return g;
 }
 
-function makeCoinGroup() {
+function makeCoinGroup() { return acquireObject('coin', buildCoinGroup); }
+function buildCoinGroup() {
     // Oreo cookie collectible
     const g = new THREE.Group();
     const darkChoc  = new THREE.MeshStandardMaterial({ color: 0x1a0f05, roughness: 0.8, transparent: true });
@@ -600,7 +765,8 @@ function makeCoinGroup() {
     return g;
 }
 
-function makeBananaGroup() {
+function makeBananaGroup() { return acquireObject('banana', buildBananaGroup); }
+function buildBananaGroup() {
     const g = new THREE.Group();
     const yellowMat = new THREE.MeshStandardMaterial({ color: 0xFFE135, roughness: 0.6 });
     const tipMat    = new THREE.MeshStandardMaterial({ color: 0xC8A000, roughness: 0.7 });
@@ -720,13 +886,18 @@ let targetX     = 0;   // LANE_WIDTH * currentLane
 let laneCooldown = 0;  // blokada przez kilka klatek żeby jedno naciśnięcie = jeden pas
 
 function changeLane(dir) {
-    if (isGameOver || laneCooldown > 0) return;
+    if (!isStarted || isPaused || isGameOver || laneCooldown > 0) return;
     currentLane = Math.max(-1, Math.min(1, currentLane + dir));
     targetX = currentLane * LANE_WIDTH;
     laneCooldown = 10; // ~10 klatek blokady przed kolejną zmianą
 }
 
 document.addEventListener('keydown', (event) => {
+    if (event.target instanceof HTMLElement && event.target.closest('button') && !isStarted) return;
+    if (['ArrowLeft','ArrowRight','Space'].includes(event.code)) event.preventDefault();
+    if (event.repeat) return;
+    if (event.code === 'Space') activateTurbo();
+    if (event.code === 'KeyP' || event.code === 'Escape') window.togglePause();
     if (event.key === 'ArrowLeft'  || event.key === 'a' || event.key === 'A') changeLane(-1);
     else if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') changeLane(1);
 });
@@ -734,6 +905,7 @@ document.addEventListener('keydown', (event) => {
 // Dotyk: swipe lewo/prawo
 let touchStartX = null;
 document.addEventListener('touchstart', (e) => {
+    if (e.target.closest('button') || !isStarted || isPaused) return;
     touchStartX = e.touches[0].clientX;
 }, { passive: true });
 document.addEventListener('touchend', (e) => {
@@ -744,10 +916,11 @@ document.addEventListener('touchend', (e) => {
 });
 
 // --- HELPER: kolizja XZ (ignoruje Y, bo monety sÄ… wyÅ¼ej niÅ¼ beczki) ---
-function collidesXZ(objPos) {
-    const dx = playerGroup.position.x - objPos.x;
-    const dz = playerGroup.position.z - objPos.z;
-    return Math.sqrt(dx * dx + dz * dz) < COLLISION_XZ_DIST;
+function collidesXZ(obj) {
+    const dx = playerGroup.position.x - obj.position.x;
+    const closestZ = Math.max(obj.userData.previousZ, Math.min(PLAYER_Z, obj.position.z));
+    const dz = PLAYER_Z - closestZ;
+    return dx * dx + dz * dz < COLLISION_XZ_DIST * COLLISION_XZ_DIST;
 }
 
 // --- ANIMACJA ÅšMIERCI BECZKI (odlatuje w bok i spada) ---
@@ -798,10 +971,12 @@ function animate() {
         return;
     }
 
+    simulationTime += dt / 60;
+    updateTurbo(dt);
     if (!isGameOver) {
         if (laneCooldown > 0) laneCooldown -= dt;
         // Płynne lerp do środka aktualnego pasa
-        playerGroup.position.x += (targetX - playerGroup.position.x) * Math.min(0.16 * dt, 1);
+        playerGroup.position.x += (targetX - playerGroup.position.x) * (1 - Math.exp(-vehicles[selectedVehicle].turn * dt));
         playerGroup.rotation.z = (playerGroup.position.x - targetX) * 0.08;
         // rotation.x intentionally removed — no idle rocking, lean only on turns
     }
@@ -827,8 +1002,6 @@ function animate() {
         }
     }
 
-    renderer.render(scene, camera);
-
     if (isGameOver) return;
     // --- Spawning oparty o dystans ---
     obstacleCountdown -= gameSpeed * dt;
@@ -852,14 +1025,15 @@ function animate() {
     // --- Obsługa przeszkód (małpki) ---
     for (let i = obstacles.length - 1; i >= 0; i--) {
         const obj = obstacles[i];
+        obj.userData.previousZ = obj.position.z;
         obj.position.z += gameSpeed * dt;
-        obj.position.y = 0.55 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.2; // bob góra-dół
+        obj.position.y = 0.55 + Math.sin(simulationTime * 3 + i * 1.7) * 0.2; // bob góra-dół
 
         // Kolizja: sprawdzamy XZ i zakres Z zbliÅ¼ony do gracza
         if (
             obj.position.z > COLLISION_Z_MIN &&
-            obj.position.z < COLLISION_Z_MAX &&
-            collidesXZ(obj.position)
+            obj.userData.previousZ < COLLISION_Z_MAX &&
+            collidesXZ(obj)
         ) {
             obstacles.splice(i, 1);
             killBarrel(obj);
@@ -869,7 +1043,7 @@ function animate() {
 
         // Beczka minÄ™Å‚a gracza â€” usuÅ„, dodaj punkty za unik
         if (obj.position.z > PLAYER_Z + 8) {
-            scene.remove(obj);
+            releaseObject(obj);
             obstacles.splice(i, 1);
             updateScore(10);
         }
@@ -878,26 +1052,27 @@ function animate() {
     // --- ObsÅ‚uga znajdziek (monety) ---
     for (let i = collectibles.length - 1; i >= 0; i--) {
         const obj = collectibles[i];
-        if (obj.userData.dying) { scene.remove(obj); collectibles.splice(i, 1); continue; } // juÅ¼ w animacji
+        if (obj.userData.dying) { releaseObject(obj); collectibles.splice(i, 1); continue; } // juÅ¼ w animacji
 
+        obj.userData.previousZ = obj.position.z;
         obj.position.z += gameSpeed * dt;
         obj.rotation.y += 0.04 * dt;   // Oreo obraca się płasko
-        obj.position.y = 1.6 + Math.sin(Date.now() * 0.003 + i * 1.7) * 0.25;
+        obj.position.y = 1.6 + Math.sin(simulationTime * 3 + i * 1.7) * 0.25;
 
         if (
             obj.position.z > COLLISION_Z_MIN &&
-            obj.position.z < COLLISION_Z_MAX &&
-            collidesXZ(obj.position)
+            obj.userData.previousZ < COLLISION_Z_MAX &&
+            collidesXZ(obj)
         ) {
             collectibles.splice(i, 1);
             collectCoin(obj);
-            updateScore(50);
+            updateScore(turboRemaining > 0 ? 100 : 50);
             updateOreo();
             continue;
         }
 
         if (obj.position.z > PLAYER_Z + 8) {
-            scene.remove(obj);
+            releaseObject(obj);
             collectibles.splice(i, 1);
         }
     }
@@ -905,14 +1080,15 @@ function animate() {
     // --- Obsługa bananów ---
     for (let i = bananas.length - 1; i >= 0; i--) {
         const obj = bananas[i];
+        obj.userData.previousZ = obj.position.z;
         obj.position.z += gameSpeed * dt;
         obj.rotation.y += 0.03 * dt;
-        obj.position.y = 0.95 + Math.sin(Date.now() * 0.003 + i * 2.1) * 0.12;
+        obj.position.y = 0.95 + Math.sin(simulationTime * 3 + i * 2.1) * 0.12;
 
         if (
             obj.position.z > COLLISION_Z_MIN &&
-            obj.position.z < COLLISION_Z_MAX &&
-            collidesXZ(obj.position)
+            obj.userData.previousZ < COLLISION_Z_MAX &&
+            collidesXZ(obj)
         ) {
             bananas.splice(i, 1);
             collectCoin(obj);
@@ -927,7 +1103,7 @@ function animate() {
         }
 
         if (obj.position.z > PLAYER_Z + 8) {
-            scene.remove(obj);
+            releaseObject(obj);
             bananas.splice(i, 1);
         }
     }
@@ -959,10 +1135,11 @@ function animate() {
 
         // UsuÅ„ po ~35 klatkach lub gdy spadnie pod podÅ‚oÅ¼e
         if (d.age > 35 || d.group.position.y < -3) {
-            scene.remove(d.group);
+            releaseObject(d.group);
             dyingObjects.splice(i, 1);
         }
     }
+    renderer.render(scene, camera);
 }
 
 function updateScore(val) {
@@ -971,7 +1148,7 @@ function updateScore(val) {
     const newLevel = Math.floor(score / SCORE_PER_LEVEL) + 1;
     if (newLevel !== level) {
         level = newLevel;
-        gameSpeed = SPEED_BASE + (level - 1) * SPEED_PER_LEVEL;
+        // Speed is updated with the turbo multiplier at the next simulation step.
         document.getElementById('level-val').innerText = level;
         playSound('faster');
         bananasThisLevel = 0;  // reset banana quota for new level
@@ -985,6 +1162,7 @@ function updateOreo() {
 }
 
 function handleCollision() {
+    if (isGameOver) return;
     lives--;
     let hearts = '';
     for (let i = 0; i < lives; i++) hearts += '\u2764';
@@ -1021,6 +1199,13 @@ function onResize() {
 }
 onResize();
 window.addEventListener('resize', onResize);
+window.addEventListener('blur', () => { if (isStarted && !isPaused && !isGameOver) window.togglePause(); });
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isStarted && !isPaused && !isGameOver) window.togglePause();
+    lastTime = 0;
+});
+document.getElementById('start-btn').disabled = false;
+document.getElementById('start-btn').textContent = 'RUSZAMY →';
 
 window.onerror = function (msg) {
     console.error('Game error:', msg);

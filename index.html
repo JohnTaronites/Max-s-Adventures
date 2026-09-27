@@ -10,10 +10,17 @@
 
     <!-- START SCREEN -->
     <div id="start-screen">
-        <h1>MAX'S<br>ADVENTURES</h1>
-        <p class="start-sub">Omijaj ma&#322;pki, zbieraj oreo!</p>
-        <button id="start-btn" onclick="startGame()">&#9654; START GRY</button>
-        <p class="start-hint">PC: Strza&#322;ki / A&ndash;D &nbsp;|&nbsp; Mobile: Przyciski lub Swipe</p>
+        <span class="eyebrow">NOWA PRZYGODA • EDYCJA TURBO</span>
+        <h1>MAX'S<br><em>ADVENTURES</em></h1>
+        <p class="start-sub">Twoja trasa. Twój pojazd. Pełny gaz.</p>
+        <div id="garage" role="group" aria-label="Wybierz pojazd">
+            <button class="vehicle-card selected" data-vehicle="monster" aria-pressed="true"><span class="vehicle-art monster"></span><strong>MONSTER</strong><small>Klasyk Maxa</small><span>Stabilny • turbo 4 s</span></button>
+            <button class="vehicle-card" data-vehicle="rally" aria-pressed="false"><span class="vehicle-art rally"></span><strong>RALLY</strong><small>Zwinny zawodnik</small><span>Szybszy skręt • turbo 3 s</span></button>
+            <button class="vehicle-card" data-vehicle="buggy" aria-pressed="false"><span class="vehicle-art buggy"></span><strong>BUGGY</strong><small>Król przygody</small><span>Dłuższe turbo • 5 s</span></button>
+        </div>
+        <button id="start-btn" onclick="startGame()" disabled>ŁADOWANIE…</button>
+        <p class="start-hint">← → / A–D: skręt · Spacja: turbo · P / Esc: pauza<br>Na telefonie: przyciski lub przesunięcie palcem</p>
+        <p class="garage-rules">Omijaj małpki · Zbieraj Oreo · Banany odnawiają życie<br>Turbo zwiększa prędkość i wynik za Oreo. Uważaj na przeszkody!</p>
     </div>
 
     <div id="ui-container">
@@ -98,13 +105,14 @@
 
         <!-- MOBILE ARROW BUTTONS -->
         <div id="mobile-controls">
-            <button class="dir-btn" id="btn-left" ontouchstart="mobileTap(-1)" onmousedown="mobileTap(-1)">&#9664;</button>
-            <button class="dir-btn" id="btn-right" ontouchstart="mobileTap(1)" onmousedown="mobileTap(1)">&#9654;</button>
+            <button class="dir-btn" id="btn-left" aria-label="Skręć w lewo">&#9664;</button>
+            <button class="dir-btn" id="btn-right" aria-label="Skręć w prawo">&#9654;</button>
         </div>
 
         <div id="controls-hint">
-            PC: Strza&#322;ki / A&ndash;D &nbsp;|&nbsp; Mobile: Swipe lewo/prawo
+            ← → / A–D: skręt · Spacja: turbo · P / Esc: pauza
         </div>
+        <button id="turbo-btn" aria-label="Włącz turbo"><span id="turbo-label">TURBO · SPACJA</span><span class="turbo-track"><span id="turbo-fill"></span></span></button>
 
         <!-- PAUSE OVERLAY -->
         <div id="pause-overlay">
@@ -118,7 +126,7 @@
             <h1>KONIEC GRY</h1>
             <p>Twój wynik: <span id="final-score">0</span></p>
             <p style="font-size:15px; color:#aaa;">Oreo zjedzone: <span id="final-oreo">0</span></p>
-            <button onclick="location.reload()">Zagraj ponownie</button>
+            <button onclick="returnToGarage()">Wróć do garażu</button>
         </div>
     </div>
 

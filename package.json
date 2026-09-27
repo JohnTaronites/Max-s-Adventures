@@ -1,0 +1,9 @@
+{
+  "name": "maxs-adventures",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "test": "node tests/smoke.cjs"
+  },
+  "devDependencies": { "playwright": "1.62.1" }
+}
